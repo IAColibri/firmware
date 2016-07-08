@@ -1,0 +1,88 @@
+ <!DOCTYPE html>
+ <html lang="en">
+   <head>
+     <meta charset="UTF-8">
+     <title>Network Configuration</title>
+     <link rel="stylesheet" href="/css/pure-min.css">
+     <link rel="stylesheet" href="/css/grids-responsive-min.css">
+     <link rel="stylesheet" href="/css/blog.css">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   </head>
+   <body>
+    <div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+    <h1 class="brand-title">Cloud Inside</h1>
+    <h2 class="brand-tagline">WiFi Controller</h2>
+    <nav class="nav">
+    <ul class="nav-list">
+    <li class="nav-item">
+      <a class="pure-button" href="http://purecss.io">Documentation</a>
+    </li>
+    <li class="nav-item">
+     <a class="pure-button" href="http://link.com/">Project</a>
+    </li>
+    </ul>
+    </nav>
+    </div>
+    </div>
+    <div class="content pure-u-1 pure-u-md-3-4">
+    <div>
+    <div class="posts">
+    <h1 class="content-subhead">Welcome to Cloud Inside</h1>
+    <section class="post">
+          <h2 class="post-title">Save Network Configuration</h2>
+          
+          <form class="pure-form pure-form-stacked" method="POST" action="/save.html">
+          <fieldset>
+          <legend>Wlan</legend>
+          <label for="hostname">Host Name</label>
+          <input id="hostname" name="hostname" type="text" placeholder="Hostname">
+          <label for="remember" class="pure-checkbox">
+          <input id="remember" name="dhcp_client" type="checkbox"> Enabled DHCP
+          </label>
+          <label for="ip">IP Address</label>
+          <input id="ip" name="ip"  type="text" placeholder="Ip Address">
+          <label for="subnet_mask">Subnet Mask</label>
+          <input id="subnet_mask" name="subnet_mask"  type="text" placeholder="255.255.255.0">
+          <label for="gateway">Gateway</label>
+          <input id="gateway" name="gateway" type="text" placeholder="192.168.1.1">
+          <label for="dns">Primary DNS</label>
+          <input id="dns" name="dns" type="text" placeholder="192.168.1.1">
+          <label for="dns_2">Secondary DNS</label>
+          <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0">
+          <label for="ssid">SSID</label>
+          <input id="ssid" name="ssid" type="text" placeholder="SSID">
+          <label for="encryption">Use Encryption</label>
+          <select id="encryption" name="encryption">
+            <option value="0" >None</option>
+            <option value="1" >WEP 40/64-bit</option>
+            <option value="2" >WEP 104/128-bit</option>
+            <option value="3" >WPA Enterprise (hex key)</option>
+            <option value="4" >WPA Personal (passphrase)</option>
+            <option value="5" >WPA2 Enterprise (hex key)</option>
+            <option value="6" selected="selected">WPA2 Personal (passphrase)</option>
+            <option value="7" >WPA/WPA2 (passphrase)</option>
+          </select>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Password">
+          <br />
+          <button type="submit" class="pure-button pure-button-primary">Save Configuration</button>
+          </fieldset>
+          </form>
+    </section>
+    </div>
+    <div class="footer">
+    <div class="pure-menu pure-menu-horizontal">
+    <ul>
+    <li class="pure-menu-item"><a href="http://purecss.io/" class="pure-menu-link">About</a></li>
+    <li class="pure-menu-item"><a href="http://twitter.com/yuilibrary/" class="pure-menu-link">Twitter</a></li>
+    <li class="pure-menu-item"><a href="http://github.com/yahoo/pure/" class="pure-menu-link">GitHub</a></li>
+    </ul>
+    </div>
+    </div>
+    </div>
+    </div>
+    </div>
+   </body>
+ </html> 

@@ -60,6 +60,7 @@ void loop(void)
 }
 
 void handleSave() { 
+  String layout;
   String content;
   bool ok =  SPIFFS.begin();
   if(ok) {
@@ -74,6 +75,11 @@ void handleSave() {
     Serial.println("ok");
     bool exist = SPIFFS.exists("/save.html");
     if(exist) {
+
+      File template_file = SPIFFS.open("/template.html", "r");
+      layout = template_file.readString();
+      template_file.close();
+
       Serial.println("The file exists!");
       File save = SPIFFS.open("/save.html", "r");
 
@@ -93,18 +99,25 @@ void handleSave() {
     Serial.println("No such file found.");
   }
 
-  server.send(200, "text/html", content);  
+  layout.replace("{content}", content);
+  server.send(200, "text/html", layout);  
 }
 
 void handleHome() {
   String header;
   String content;
+  String layout;
 
   bool ok =  SPIFFS.begin();
   if(ok) {
     Serial.println("ok");
     bool exist = SPIFFS.exists("/form.html");
     if(exist) {
+
+      File template_file = SPIFFS.open("/template.html", "r");
+      layout = template_file.readString();
+      template_file.close();
+
       Serial.println("The file exists!");
       File form = SPIFFS.open("/form.html", "r");
 
@@ -144,7 +157,9 @@ void handleHome() {
   }
   content += "</pre>";
 
-  server.send(200, "text/html", content);  
+  layout.replace("{content}", content);
+
+  server.send(200, "text/html", layout);  
 
 }    
 

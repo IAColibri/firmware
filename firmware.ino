@@ -5,8 +5,8 @@
 //////////////////////
 // WiFi Definitions //
 //////////////////////
-const char* ssid = "blabla";
-const char* WiFiAPPSK = "123123123";
+String ssid = "blabla";
+String WiFiAPPSK = "123123123";
 
 ESP8266WebServer server(80);
 
@@ -32,34 +32,29 @@ void setupWiFi()
   WiFi.softAP(AP_NameChar, WiFiAPPSK);
 }
 
-void setup() 
-{
+void setup(){
   initHardware();
   setupWiFi();
-  
+
   server.on("/", handleHome);
   server.on("/save.html", handleSave);
   server.onNotFound(handleNotFound);
 
   const char * headerkeys[] = {"User-Agent","Cookie"} ;
-  size_t headerkeyssize = sizeof(headerkeys)/sizeof(char*)
-    ;
+  size_t headerkeyssize = sizeof(headerkeys)/sizeof(char*);
   server.collectHeaders(headerkeys, headerkeyssize );
   server.begin();
-
 }
 
-void initHardware()
-{
+void initHardware){
   Serial.begin(115200);
 }
 
-void loop(void)
-{
+void loop(void){
  server.handleClient();
 }
 
-void handleSave() { 
+void handleSave() {
   String layout;
   String content;
   bool ok =  SPIFFS.begin();
@@ -100,7 +95,7 @@ void handleSave() {
   }
 
   layout.replace("{content}", content);
-  server.send(200, "text/html", layout);  
+  server.send(200, "text/html", layout);
 }
 
 void handleHome() {
@@ -136,7 +131,7 @@ void handleHome() {
   } else {
     Serial.println("No such file found.");
   }
- 
+
   content += "<pre>";
   bool e = SPIFFS.exists("/network");
   if(e) {
@@ -150,7 +145,7 @@ void handleHome() {
       String dataNet = net.readString();
       content += dataNet + "<br />";
       net.close();
-    
+
   } else {
     Serial.println("No such file found.");
     content += "No such file found.";
@@ -159,9 +154,9 @@ void handleHome() {
 
   layout.replace("{content}", content);
 
-  server.send(200, "text/html", layout);  
+  server.send(200, "text/html", layout);
 
-}    
+}
 
 bool loadFromSpiffs(String path){
   Serial.println(path);
@@ -191,93 +186,4 @@ bool loadFromSpiffs(String path){
 void handleNotFound() {
    if(loadFromSpiffs(server.uri())) return;
 }
-
-
-/***********************************************
-  * this function save file or open and show 
-  * the content into the browser
-  */
-
-/****************************************
-void handleShow() {
-  Serial.println("Enter handleRoot");
-
-  String header;
-  // File show = SPIFFS.open("/data/show.html", "r");
-  String content = "show.readString()";
-  // show.close();
-
-  if (server.hasHeader("User-Agent")){
-    content += "the user agent used is : " + server.header("User-Agent") + "<br><br>";
-  }
-
-  File f = SPIFFS.open("info.txt", "r");
-  for(int j=0; j < server.args(); j++) {
-    String line = f.readStringUntil('\n');
-    content += "<h3>" + line + "</h3>";
-  }
-  f.close();
-  
-  server.send(200, "text/html", content);  
-}
-
-void handleHome() {
-  String header;
-  String content;
-
-  bool ok =  SPIFFS.begin();
-
-  if(ok) {
-
-  bool work = SPIFFS.exists("/data.txt");
-
-  if(!work) {
-    File xyz = SPIFFS.open("/data.txt", "w");
-    if(!xyz) {
-      Serial.println("No such file found.");
-      content += "cant't open file for write";
-    } else {
-     xyz.println("testing bla bla bla");
-     xyz.println("123456789");
-    }
-    xyz.close();
-  } else {
-    content += "<h3> The file is saved SUCCESS </h3>";
-  }
-
-    Serial.println("ok");
-    bool exist = SPIFFS.exists("/data.txt");
-    if(exist) {
-      Serial.println("The file exists!");
-      content += "The file exists!";
-      File home = SPIFFS.open("/data.txt", "r");
-      if(!home) {
-        Serial.println("Something went wrong trying to open the file ...");
-        content += "Something went wrong trying to open the file ...";
-      }
-      int s = home.size();
-      Serial.printf("Size = %d\r\n", s);
-      content += "Size = %d\r\n <br />";
-      String data = home.readString();
-
-      Serial.println(data);
-      content += data + "<br />";
-      home.close();
-    }
-  } else {
-    Serial.println("No such file found.");
-    content += "No such file found.";
-  }
-
-
-  if (server.hasHeader("User-Agent")){
-    content += "the user agent used is : " + server.header("User-Agent") + "<br><br>";
-  }
-  
-  content += "<a href=\"/show\">show</a><br>";
-  
-  server.send(200, "text/html", content);  
-}
-
-***************************/
 

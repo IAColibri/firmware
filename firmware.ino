@@ -2,25 +2,55 @@
 #include <ESP8266WebServer.h>
 #include "FS.h"
 
-//////////////////////
-// WiFi Definitions //
-//////////////////////
-const char* ssid = "blabla";
-const char* password = "123123123";
-
 ESP8266WebServer server(80);
 
-void setupWiFi()
-{
+void setupWiFi(){
+  const char* ssid = "blabla";
+  const char* password = "123123123";
+
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, password);
   server.on("/", handleHome);
   server.on("/save.html", handleSave);
 }
+void setupClientWiFi(){
+  String ssid;
+  String password;
+
+  File f = SPIFFS.open("/network", "r");
+  if(!f){ Serial.println("no existe"); }
+  Serial.println("existe");
+  Serial.println(f.available());
+  while(f.available()) {
+    if(ssid == ""){
+      ssid = f.readStringUntil('\n');
+      password = f.readStringUntil('\n');
+    }
+    f.readStringUntil('\n');
+    Serial.println("ssid");
+    Serial.println(ssid);
+    Serial.println("password");
+    Serial.println(password);
+  }
+  f.close();
+  WiFi.begin(ssid.c_str(), password.c_str());
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println(ssid);
+    Serial.println(password);
+    delay(500);
+    Serial.print(".");
+  }
+}
 
 void setup(){
   initHardware();
-  setupWiFi();
+  bool config = SPIFFS.exists("/network");
+  if(config){
+    setupClientWiFi();
+  } else {
+    setupWiFi();
+  }
 
   server.onNotFound(handleNotFound);
 
@@ -31,11 +61,17 @@ void setup(){
 }
 
 void initHardware(){
+  SPIFFS.begin();
   Serial.begin(115200);
+  pinMode(2, INPUT);
 }
-
 void loop(void){
  server.handleClient();
+ if(!digitalRead(2)){
+   Serial.println("apretado");
+   SPIFFS.remove("/network");
+ }
+ Serial.println(WiFi.localIP());
 }
 
 void handleSave() {
@@ -46,8 +82,8 @@ void handleSave() {
 
     File net = SPIFFS.open("/network", "w");
     for(int i = 0; i < server.args();i++) {
-      net.print(server.arg(i) + "\n");
-      content += server.arg(i) + "\n";
+      net.print(server.arg(i) + '\n');
+      content += server.arg(i) + '\n';
     }
     net.close();
 

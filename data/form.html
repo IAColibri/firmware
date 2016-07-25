@@ -1,42 +1,42 @@
-    <section class="post">
-          <h2 class="post-title">Save Network Configuration</h2>
-          
-          <form class="pure-form pure-form-stacked" method="POST" action="/save.html">
-          <fieldset>
-          <legend>Wlan</legend>
-          <label for="hostname">Host Name</label>
-          <input id="hostname" name="hostname" type="text" placeholder="Hostname">
-          <label for="remember" class="pure-checkbox">
-          <input id="remember" name="dhcp_client" type="checkbox"> Enabled DHCP
-          </label>
-          <label for="ip">IP Address</label>
-          <input id="ip" name="ip"  type="text" placeholder="Ip Address">
-          <label for="subnet_mask">Subnet Mask</label>
-          <input id="subnet_mask" name="subnet_mask"  type="text" placeholder="255.255.255.0">
-          <label for="gateway">Gateway</label>
-          <input id="gateway" name="gateway" type="text" placeholder="192.168.1.1">
-          <label for="dns">Primary DNS</label>
-          <input id="dns" name="dns" type="text" placeholder="192.168.1.1">
-          <label for="dns_2">Secondary DNS</label>
-          <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0">
-          <label for="ssid">SSID</label>
-          <input id="ssid" name="ssid" type="text" placeholder="SSID">
-          <label for="encryption">Use Encryption</label>
-          <select id="encryption" name="encryption">
-            <option value="0" >None</option>
-            <option value="1" >WEP 40/64-bit</option>
-            <option value="2" >WEP 104/128-bit</option>
-            <option value="3" >WPA Enterprise (hex key)</option>
-            <option value="4" >WPA Personal (passphrase)</option>
-            <option value="5" >WPA2 Enterprise (hex key)</option>
-            <option value="6" selected="selected">WPA2 Personal (passphrase)</option>
-            <option value="7" >WPA/WPA2 (passphrase)</option>
-          </select>
-          <label for="password">Password</label>
-          <input id="password" name="password" type="password" placeholder="Password">
-          <br />
-          <button type="submit" class="pure-button pure-button-primary">Save Configuration</button>
-          </fieldset>
-          </form>
-    </section>
+<section class="post">
+  <h2 class="post-title">Save Network Configuration</h2>
+
+  <form class="pure-form pure-form-stacked" method="POST" action="/save.html">
+    <fieldset>
+      <legend>Wlan</legend>
+      <label for="hostname">Host Name</label>
+      <input id="hostname" name="hostname" type="text" placeholder="Hostname">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="Password">
+      <label for="remember" class="pure-checkbox">
+        <input id="remember" name="dhcp_client" type="checkbox"> Enabled DHCP
+      </label>
+      <label for="ip">IP Address</label>
+      <input id="ip" name="ip"  type="text" placeholder="Ip Address">
+      <label for="subnet_mask">Subnet Mask</label>
+      <input id="subnet_mask" name="subnet_mask"  type="text" placeholder="255.255.255.0">
+      <label for="gateway">Gateway</label>
+      <input id="gateway" name="gateway" type="text" placeholder="192.168.1.1">
+      <label for="dns">Primary DNS</label>
+      <input id="dns" name="dns" type="text" placeholder="192.168.1.1">
+      <label for="dns_2">Secondary DNS</label>
+      <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0">
+      <label for="ssid">SSID</label>
+      <input id="ssid" name="ssid" type="text" placeholder="SSID">
+      <label for="encryption">Use Encryption</label>
+      <select id="encryption" name="encryption">
+        <option value="0" >None</option>
+        <option value="1" >WEP 40/64-bit</option>
+        <option value="2" >WEP 104/128-bit</option>
+        <option value="3" >WPA Enterprise (hex key)</option>
+        <option value="4" >WPA Personal (passphrase)</option>
+        <option value="5" >WPA2 Enterprise (hex key)</option>
+        <option value="6" selected="selected">WPA2 Personal (passphrase)</option>
+        <option value="7" >WPA/WPA2 (passphrase)</option>
+      </select>
+      <br />
+      <button type="submit" class="pure-button pure-button-primary">Save Configuration</button>
+    </fieldset>
+  </form>
+</section>
 

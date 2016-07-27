@@ -5,23 +5,27 @@
 #include "config.h"
 #include "control.h"
 
-
+bool ok;
+String _log;
 ESP8266WebServer server(80);
 
 void setup() {
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
-  Serial.begin(115200);
+
+  Serial.begin(9600);
+
   bool fs = SPIFFS.begin();
   if(fs) {
-    bool ok = SPIFFS.exists("/ok");
+     ok = SPIFFS.exists("/ok");
      if(ok) {
       /* ***
        * if the configuration is ok
        * then open in device mode from control.h
        *** */
-      initApp();
+
+      _log = initApp();
       deviceWebServer();
     } else {
       /* ***
@@ -32,13 +36,22 @@ void setup() {
       deviceConfigInterface();
     }
   } else {
-    Serial.begin(115200);
+    Serial.begin(9600);
     Serial.println("ERROR - open library FS.h");
+    delay(1);
   }
 }
 
 void loop(void) {
   server.handleClient();
+
+  if(ok) {
+    Serial.println("device mode " + _log);
+    delay(1);
+  }else {
+    Serial.println("ap config mode");
+    delay(1);
+  }
 }
 
 /** 
@@ -61,7 +74,7 @@ void deviceWebServer() {
 }
 
 void handleIndex() {
-  String layout = "index";
+  String layout = "welcome";
   server.send(200, "text/html", layout);
 }
 void handleStatus() {
@@ -138,14 +151,19 @@ void handleHome() {
 }
 
 void handleConfigurationSave() {
-  bool ok = SPIFFS.begin();
-  if(ok) {
+  bool fs = SPIFFS.begin();
+
+  if(fs) {
    File net = SPIFFS.open("/network", "w");
    for(int i = 0; i < server.args(); i++) {
      net.print(server.arg(i) + ",");
    }
    net.close();
-   
+  
+   File ok_file = SPIFFS.open("/ok", "w");
+   ok_file.print("true");
+   ok_file.close();
+
    server.send(200, "text/html", layout("save"));
   } else {
      error_open_file("ERROR - open SSPIFFS Library"); 

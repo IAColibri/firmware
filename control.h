@@ -1,10 +1,9 @@
-#include <ESP8266WiFi.h>
 #include "tools.h"
 
 String localIP;
 
-bool initApp() {
-
+String initApp() {
+  
   bool fs = SPIFFS.begin();
   bool exist = SPIFFS.exists("/network");
 
@@ -14,11 +13,16 @@ bool initApp() {
     row = config.readString();
     config.close();
   } else {
-    return false;
+    return "false";
   }
 
   String ssid = split(row, ',', 7);
   String password = split(row, ',', 9);
+
+  Serial.println(ssid);
+  delay(10);
+  Serial.println(password);
+  delay(10);
 
   WiFi.begin(ssid.c_str(), password.c_str());
   while(WiFi.status() != WL_CONNECTED) {
@@ -27,7 +31,7 @@ bool initApp() {
  
   localIP = WiFi.localIP().toString();
 
-  return true;
+  return "logging: " +  ssid +" -> " + password;
 }
 
 

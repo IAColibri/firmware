@@ -5,7 +5,7 @@
  */
 
 const char* ssid = "WiiControl";
-const char* WiFiAPPSK = "";
+const char* WiFiAPPSK = NULL;
 
 void initConfig() {
   WiFi.mode(WIFI_AP);
@@ -25,6 +25,7 @@ void initConfig() {
   for (int i=0; i<AP_NameString.length(); i++)
   AP_NameChar[i] = AP_NameString.charAt(i);
 
-  WiFi.softAP(ssid);
+  WiFi.softAP(AP_NameChar, WiFiAPPSK);
 }
+
 

@@ -9,7 +9,6 @@ const char* WiFiAPPSK = NULL;
 
 void initConfig() {
   WiFi.mode(WIFI_AP);
-
   // Do a little work to get a unique-ish name. Append the
   // last two bytes of the MAC (HEX'd) to "Thing-":
   uint8_t mac[WL_MAC_ADDR_LENGTH];

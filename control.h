@@ -2,8 +2,8 @@
 
 String localIP;
 
-String initApp() {
-  
+bool initApp() {
+  WiFi.mode(WIFI_OFF);
   bool fs = SPIFFS.begin();
   bool exist = SPIFFS.exists("/network");
 
@@ -13,26 +13,41 @@ String initApp() {
     row = config.readString();
     config.close();
   } else {
-    return "false";
+    return false;
   }
 
-  String ssid = split(row, ',', 7);
-  String password = split(row, ',', 9);
+  String hostname = split(row, ',', 1);
 
-  Serial.println(ssid);
-  delay(10);
-  Serial.println(password);
-  delay(10);
+  IPAddress ip = getIp(split(row, ',', 3));
+  IPAddress gateway = getIp(split(row, ',', 5));
+  IPAddress subnet = getIp(split(row, ',', 4));
 
+  String ssid = split(row, ',', 8);
+  String password = split(row, ',', 10);
+
+  /** detail verbosity
+  Serial.begin(9600);
+  Serial.println(row + "\n");
+  Serial.println("\n" + hostname + "\n");
+  Serial.println("\n" + ip.toString() + "\n");
+  Serial.println("\n" + gateway.toString() + "\n");
+  Serial.println("\n" + subnet.toString() + "\n");
+  Serial.println("\n" + ssid + "\n");
+  Serial.println("\n" + password + "\n"); */
+
+  WiFi.hostname(hostname);
+  WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid.c_str(), password.c_str());
+
   while(WiFi.status() != WL_CONNECTED) {
     delay(500);
   }
  
   localIP = WiFi.localIP().toString();
 
-  return "logging: " +  ssid +" -> " + password;
+  /** detail verbosity
+  Serial.println("\n" + localIP +  "\n");
+  */
+  return true;
 }
-
-
 

@@ -9,13 +9,14 @@ bool ok;
 String _log;
 ESP8266WebServer server(80);
 
+const int buttonPin = 0;
+int buttonState = 0;
+String state_button;
+
 void setup() {
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
-
-  Serial.begin(9600);
-
   bool fs = SPIFFS.begin();
   if(fs) {
      ok = SPIFFS.exists("/ok");
@@ -24,9 +25,19 @@ void setup() {
        * if the configuration is ok
        * then open in device mode from control.h
        *** */
+      bool start = initApp();
+      if (start) {
+       deviceWebServer();
 
-      _log = initApp();
-      deviceWebServer();
+       /* ***
+       * Initialize GPIO02 resetButton  
+       *** */
+       pinMode(buttonPin, INPUT);
+      } else {
+        Serial.begin(9600);
+        Serial.println("ERROR - INIT");
+        delay(1);
+      }
     } else {
       /* ***
        * if configuration is not ok
@@ -45,12 +56,12 @@ void setup() {
 void loop(void) {
   server.handleClient();
 
-  if(ok) {
-    Serial.println("device mode " + _log);
-    delay(1);
-  }else {
-    Serial.println("ap config mode");
-    delay(1);
+  // read reset button
+   buttonState = digitalRead(buttonPin);
+  if(buttonState == HIGH) {
+    state_button = "high";
+  } else {
+    state_button = "low";   
   }
 }
 
@@ -59,7 +70,6 @@ void loop(void) {
 * @url "/" and "status.html" and "network.html"
 * @url "update.html"
 */
-
 void deviceWebServer() {
   server.on("/", handleIndex);
   server.on("/status.html", handleStatus);
@@ -74,9 +84,9 @@ void deviceWebServer() {
 }
 
 void handleIndex() {
-  String layout = "welcome";
-  server.send(200, "text/html", layout);
+  server.send(200, "text/html", layout("welcome"));
 }
+
 void handleStatus() {
   String layout = "status";
   server.send(200, "text/html", layout);
@@ -156,6 +166,9 @@ void handleConfigurationSave() {
   if(fs) {
    File net = SPIFFS.open("/network", "w");
    for(int i = 0; i < server.args(); i++) {
+     if((i == 1) && (server.args() == 9)) {
+      net.print(",");
+     }
      net.print(server.arg(i) + ",");
    }
    net.close();
@@ -189,6 +202,7 @@ String layout(String file_name) {
     int size = main.size();
     content = main.readString();
     main.close();
+    content.replace("{reset_status}", state_button);
 
     layout.replace("{content}", content);
   } else {
@@ -201,7 +215,6 @@ String layout(String file_name) {
   }
 
 }
-
 
 void error_open_file(String text) {
   server.send(200, "text/html", text);

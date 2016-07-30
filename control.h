@@ -3,7 +3,9 @@
 String localIP;
 
 bool initApp() {
-  WiFi.mode(WIFI_OFF);
+
+  WiFi.mode(WIFI_STA);
+
   bool fs = SPIFFS.begin();
   bool exist = SPIFFS.exists("/network");
 

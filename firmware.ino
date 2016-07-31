@@ -81,17 +81,8 @@ void setup() {
 
        deviceWebServer();
 
-<<<<<<< HEAD
-       /* ****
-        * Start Web Socket
-        **** */
-       web_socket.begin();
-       web_socket.onEvent(webSocketEvent);
-
-=======
-       // my socket
+      // my socket
        TCPServer.begin();
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
        /* ***
        * Initialize GPIO02 resetButton  
        *** */
@@ -117,13 +108,8 @@ void setup() {
 }
 
 void loop(void) {
-<<<<<<< HEAD
 
   server.handleClient();
-  web_socket.loop();
-=======
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
-
   WiFiClient client = TCPServer.available();
 
   if (client){
@@ -145,11 +131,7 @@ void loop(void) {
     status_button = "high";
   } else {
     status_button = "low";   
-<<<<<<< HEAD
-    if(low > 50) { 
-=======
     if(low > 500) { 
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
       Serial.println("CLEAN!!");
       clean(); 
     }
@@ -324,13 +306,8 @@ void clean() {
   } else {
      error_open_file("ERROR - open SSPIFFS Library"); 
   }
-<<<<<<< HEAD
+
 
 }
 
-=======
-}
-
-
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 

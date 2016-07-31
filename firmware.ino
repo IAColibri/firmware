@@ -108,7 +108,6 @@ void setup() {
 }
 
 void loop(void) {
-
   server.handleClient();
   WiFiClient client = TCPServer.available();
 

@@ -2,6 +2,7 @@
 
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
+#include <WiFiClient.h>
 
 #include "FS.h"
 #include "config.h"
@@ -12,45 +13,12 @@ String _log;
 ESP8266WebServer server(80);
 bool reset = false;
 
-
 const int buttonPin = 0;
 int buttonState = 0;
 String status_button;
 int low = 0;
 
-
-WebSocketsServer web_socket = WebSocketsServer(81);
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
-  Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
-  switch(type) {
-    case WStype_DISCONNECTED:
-      Serial.printf("[%u] Disconnected!\r\n", num);
-    break;
-    case WStype_CONNECTED:
-      {
-        IPAddress ip = web_socket.remoteIP(num);
-        Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
-        web_socket.sendTXT(num, "Connected");
-      }
-    break;
-    case WStype_TEXT:
-     Serial.printf("[%u] get Text: %s\r\n", num, payload);
-    // send message to client
-    // webSocket.sendTXT(num, "message here");
-    // send data to all connected clients
-    // webSocket.broadcastTXT("message here");
-    break;
-    case WStype_BIN:
-     Serial.printf("[%u] get binary length: %u\r\n", num, length);
-    break;
-    default:
-      Serial.printf("Invalid WStype [%d]\r\n", type);
-    break;
-  }
-
-}
-
+WiFiServer TCPServer(81);
 
 void setup() {
   Serial.begin(9600);
@@ -70,12 +38,8 @@ void setup() {
 
        deviceWebServer();
 
-       /* ****
-        * Start Web Socket
-        **** */
-       web_socket.begin();
-       web_socket.onEvent(webSocketEvent);
-
+       // my socket
+       TCPServer.begin();
        /* ***
        * Initialize GPIO02 resetButton  
        *** */
@@ -102,21 +66,34 @@ void setup() {
 
 void loop(void) {
 
-  server.handleClient();
-  web_socket.loop();
+  WiFiClient client = TCPServer.available();
 
+  if (client){
+    Serial.println("Client connected");
+    while (client.connected()){
+      // Read the incoming TCP command
+      String command = client.readStringUntil('\n');
+      // Debugging display command
+      command.trim();
+      Serial.println(command);
+    }
+  }
+
+  server.handleClient();
+  /***
   // read reset button
    buttonState = digitalRead(buttonPin);
   if(buttonState == HIGH) {
     status_button = "high";
   } else {
     status_button = "low";   
-    if(low > 50) { 
+    if(low > 500) { 
       Serial.println("CLEAN!!");
       clean(); 
     }
     low++;
   }
+  */
 }
 
 /** 
@@ -263,7 +240,6 @@ String layout(String file_name) {
   } else {
       return "Exception - No such file found. ["+file_name+"]" ;
   }
-
   return layout;
   } else {  
     return "ERROR - open SSPIFFS Library"; 
@@ -286,7 +262,7 @@ void clean() {
   } else {
      error_open_file("ERROR - open SSPIFFS Library"); 
   }
-
 }
+
 
 

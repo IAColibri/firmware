@@ -41,8 +41,16 @@ bool initApp() {
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid.c_str(), password.c_str());
 
+  int times = 0;
+  Serial.begin(9600);
   while(WiFi.status() != WL_CONNECTED) {
     delay(500);
+    if(times > 1000) {
+      Serial.println("RESET !");
+      reset_device();
+    }
+    Serial.println("<<"+ String(times) + ">>");
+    times++;
   }
  
   localIP = WiFi.localIP().toString();

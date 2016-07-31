@@ -1,5 +1,7 @@
 #include <ESP8266WiFi.h>
+
 #include <ESP8266WebServer.h>
+#include <WebSocketsServer.h>
 
 #include "FS.h"
 #include "config.h"
@@ -8,12 +10,50 @@
 bool ok;
 String _log;
 ESP8266WebServer server(80);
+bool reset = false;
+
 
 const int buttonPin = 0;
 int buttonState = 0;
-String state_button;
+String status_button;
+int low = 0;
+
+
+WebSocketsServer web_socket = WebSocketsServer(81);
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
+  switch(type) {
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] Disconnected!\r\n", num);
+    break;
+    case WStype_CONNECTED:
+      {
+        IPAddress ip = web_socket.remoteIP(num);
+        Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        web_socket.sendTXT(num, "Connected");
+      }
+    break;
+    case WStype_TEXT:
+     Serial.printf("[%u] get Text: %s\r\n", num, payload);
+    // send message to client
+    // webSocket.sendTXT(num, "message here");
+    // send data to all connected clients
+    // webSocket.broadcastTXT("message here");
+    break;
+    case WStype_BIN:
+     Serial.printf("[%u] get binary length: %u\r\n", num, length);
+    break;
+    default:
+      Serial.printf("Invalid WStype [%d]\r\n", type);
+    break;
+  }
+
+}
+
 
 void setup() {
+  Serial.begin(9600);
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
@@ -27,7 +67,14 @@ void setup() {
        *** */
       bool start = initApp();
       if (start) {
+
        deviceWebServer();
+
+       /* ****
+        * Start Web Socket
+        **** */
+       web_socket.begin();
+       web_socket.onEvent(webSocketEvent);
 
        /* ***
        * Initialize GPIO02 resetButton  
@@ -54,14 +101,21 @@ void setup() {
 }
 
 void loop(void) {
+
   server.handleClient();
+  web_socket.loop();
 
   // read reset button
    buttonState = digitalRead(buttonPin);
   if(buttonState == HIGH) {
-    state_button = "high";
+    status_button = "high";
   } else {
-    state_button = "low";   
+    status_button = "low";   
+    if(low > 50) { 
+      Serial.println("CLEAN!!");
+      clean(); 
+    }
+    low++;
   }
 }
 
@@ -202,9 +256,10 @@ String layout(String file_name) {
     int size = main.size();
     content = main.readString();
     main.close();
-    content.replace("{reset_status}", state_button);
+    content.replace("{reset_status}", status_button);
 
     layout.replace("{content}", content);
+    layout.replace("{status_button}", status_button);
   } else {
       return "Exception - No such file found. ["+file_name+"]" ;
   }
@@ -218,6 +273,20 @@ String layout(String file_name) {
 
 void error_open_file(String text) {
   server.send(200, "text/html", text);
+}
+
+void clean() {
+  bool fs = SPIFFS.begin();
+  if(fs) {
+   bool ok_file = SPIFFS.remove("/ok");
+   if(ok_file) {
+     reset = true;
+   }
+   ESP.restart();
+  } else {
+     error_open_file("ERROR - open SSPIFFS Library"); 
+  }
+
 }
 
 

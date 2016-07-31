@@ -32,3 +32,14 @@ IPAddress getIp(String ip_string){
           (uint8_t) split(ip_string, '.', 4).toInt());
   return ip;
 }
+
+void reset_device() {
+  bool fs = SPIFFS.begin();
+  if(fs) {
+   bool ok_file = SPIFFS.remove("/ok");
+   ESP.restart();
+  } else {
+    Serial.begin(9600);
+    Serial.println("ERROR - open SSPIFFS Library"); 
+  }
+}

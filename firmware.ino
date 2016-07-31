@@ -2,6 +2,10 @@
 
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
+<<<<<<< HEAD
+=======
+#include <WiFiClient.h>
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 
 #include "FS.h"
 #include "config.h"
@@ -11,13 +15,17 @@ bool ok;
 String _log;
 ESP8266WebServer server(80);
 bool reset = false;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 
 const int buttonPin = 0;
 int buttonState = 0;
 String status_button;
 int low = 0;
 
+<<<<<<< HEAD
 
 WebSocketsServer web_socket = WebSocketsServer(81);
 
@@ -51,6 +59,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 }
 
+=======
+WiFiServer TCPServer(81);
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 
 void setup() {
   Serial.begin(9600);
@@ -70,12 +81,17 @@ void setup() {
 
        deviceWebServer();
 
+<<<<<<< HEAD
        /* ****
         * Start Web Socket
         **** */
        web_socket.begin();
        web_socket.onEvent(webSocketEvent);
 
+=======
+       // my socket
+       TCPServer.begin();
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
        /* ***
        * Initialize GPIO02 resetButton  
        *** */
@@ -101,22 +117,45 @@ void setup() {
 }
 
 void loop(void) {
+<<<<<<< HEAD
 
   server.handleClient();
   web_socket.loop();
+=======
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 
+  WiFiClient client = TCPServer.available();
+
+  if (client){
+    Serial.println("Client connected");
+    while (client.connected()){
+      // Read the incoming TCP command
+      String command = client.readStringUntil('\n');
+      // Debugging display command
+      command.trim();
+      Serial.println(command);
+    }
+  }
+
+  server.handleClient();
+  /***
   // read reset button
    buttonState = digitalRead(buttonPin);
   if(buttonState == HIGH) {
     status_button = "high";
   } else {
     status_button = "low";   
+<<<<<<< HEAD
     if(low > 50) { 
+=======
+    if(low > 500) { 
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
       Serial.println("CLEAN!!");
       clean(); 
     }
     low++;
   }
+  */
 }
 
 /** 
@@ -263,7 +302,6 @@ String layout(String file_name) {
   } else {
       return "Exception - No such file found. ["+file_name+"]" ;
   }
-
   return layout;
   } else {  
     return "ERROR - open SSPIFFS Library"; 
@@ -286,7 +324,13 @@ void clean() {
   } else {
      error_open_file("ERROR - open SSPIFFS Library"); 
   }
+<<<<<<< HEAD
 
 }
 
+=======
+}
+
+
+>>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 

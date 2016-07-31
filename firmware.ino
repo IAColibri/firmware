@@ -2,10 +2,7 @@
 
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
-<<<<<<< HEAD
-=======
 #include <WiFiClient.h>
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 
 #include "FS.h"
 #include "config.h"
@@ -14,54 +11,15 @@
 bool ok;
 String _log;
 ESP8266WebServer server(80);
-bool reset = false;
-<<<<<<< HEAD
 
-=======
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
+bool reset = false;
 
 const int buttonPin = 0;
 int buttonState = 0;
 String status_button;
 int low = 0;
 
-<<<<<<< HEAD
-
-WebSocketsServer web_socket = WebSocketsServer(81);
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
-  Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
-  switch(type) {
-    case WStype_DISCONNECTED:
-      Serial.printf("[%u] Disconnected!\r\n", num);
-    break;
-    case WStype_CONNECTED:
-      {
-        IPAddress ip = web_socket.remoteIP(num);
-        Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
-        web_socket.sendTXT(num, "Connected");
-      }
-    break;
-    case WStype_TEXT:
-     Serial.printf("[%u] get Text: %s\r\n", num, payload);
-    // send message to client
-    // webSocket.sendTXT(num, "message here");
-    // send data to all connected clients
-    // webSocket.broadcastTXT("message here");
-    break;
-    case WStype_BIN:
-     Serial.printf("[%u] get binary length: %u\r\n", num, length);
-    break;
-    default:
-      Serial.printf("Invalid WStype [%d]\r\n", type);
-    break;
-  }
-
-}
-
-=======
 WiFiServer TCPServer(81);
->>>>>>> 81cca04d0df2021153efde17a844b67af5a3b408
 
 void setup() {
   Serial.begin(9600);
@@ -305,7 +263,6 @@ void clean() {
   } else {
      error_open_file("ERROR - open SSPIFFS Library"); 
   }
-
 
 }
 

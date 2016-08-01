@@ -15,14 +15,31 @@ ESP8266WebServer server(80);
 bool reset = false;
 
 const int buttonPin = 0;
+int relayPin = 2;
+
 int buttonState = 0;
 String status_button;
 int low = 0;
 
-WiFiServer TCPServer(81);
+/**
+ WiFiServer TCPServer(81);
+*/
 
 void setup() {
   Serial.begin(9600);
+
+  /* ***
+  * Initialize GPIO00 resetButton  
+  *** */
+  pinMode(buttonPin, INPUT);
+
+  /* ***
+  * Initialize GPIO02 relayPin
+  *** */
+  pinMode(relayPin, OUTPUT);
+  pinMode(relayPin, LOW);
+
+
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
@@ -36,15 +53,11 @@ void setup() {
        *** */
       bool start = initApp();
       if (start) {
-
        deviceWebServer();
-
+      /**
       // my socket
        TCPServer.begin();
-       /* ***
-       * Initialize GPIO02 resetButton  
-       *** */
-       pinMode(buttonPin, INPUT);
+    */
       } else {
         Serial.begin(9600);
         Serial.println("ERROR - INIT");
@@ -67,8 +80,9 @@ void setup() {
 
 void loop(void) {
   server.handleClient();
-  WiFiClient client = TCPServer.available();
 
+  /**
+  WiFiClient client = TCPServer.available();
   if (client){
     Serial.println("Client connected");
     while (client.connected()){
@@ -79,22 +93,29 @@ void loop(void) {
       Serial.println(command);
     }
   }
+  */
 
-  server.handleClient();
   /***
-  // read reset button
-   buttonState = digitalRead(buttonPin);
+  // read reset button */
+
+  buttonState = digitalRead(buttonPin);
+  
   if(buttonState == HIGH) {
     status_button = "high";
+  pinMode(relayPin, LOW);
+    Serial.println("high");
+    digitalWrite(relayPin, LOW);
   } else {
+    Serial.println("low");
+    pinMode(relayPin, HIGH);
+    delay(500);
     status_button = "low";   
     if(low > 500) { 
       Serial.println("CLEAN!!");
-      clean(); 
+      // clean(); 
     }
     low++;
   }
-  */
 }
 
 /** 
@@ -178,8 +199,7 @@ void handleNotFound() {
   if(loadFromSpiffs(server.uri())) return;
 }
 
-
-/**************************
+/* *************************
  * AP_MODE configuration mode
  * this section is for put Configuration mode pages.
  @url home.html / index.html / none
@@ -198,7 +218,7 @@ void handleConfigurationSave() {
   if(fs) {
    File net = SPIFFS.open("/network", "w");
    for(int i = 0; i < server.args(); i++) {
-     if((i == 1) && (server.args() == 9)) {
+     if((i == 1) && (server.args() == 10)) {
       net.print(",");
      }
      net.print(server.arg(i) + ",");
@@ -224,29 +244,35 @@ String layout(String file_name) {
   if(ok) {
   check = SPIFFS.exists("/"+ file_name +".html");
 
-  if(check) {
-    File template_file = SPIFFS.open("/template.html", "r");
-    layout = template_file.readString();
-    template_file.close();
+    if(check) {
+      File template_file = SPIFFS.open("/template.html", "r");
+      layout = template_file.readString();
+      template_file.close();
 
-    File main =  SPIFFS.open("/"+ file_name + ".html", "r");
+      File main =  SPIFFS.open("/"+ file_name + ".html", "r");
+      
+      int size = main.size();
+      content = main.readString();
+/**
+      if(file_name.equals("form")) {
+        Serial.println("1");
+        content = autocomplete(content);
+      }*/
 
-    int size = main.size();
-    content = main.readString();
-    main.close();
-    content.replace("{reset_status}", status_button);
+      main.close();
+      content.replace("{reset_status}", status_button);
 
-    layout.replace("{content}", content);
-    layout.replace("{status_button}", status_button);
-  } else {
-      return "Exception - No such file found. ["+file_name+"]" ;
-  }
-  return layout;
-  } else {  
-    return "ERROR - open SSPIFFS Library"; 
-  }
+      layout.replace("{content}", content);
+      layout.replace("{status_button}", status_button);
+    } else {
+        return "Exception - No such file found. ["+file_name+"]" ;
+    }
+    return layout;
+    } else {  
+      return "ERROR - open SSPIFFS Library"; 
+    }
+ }
 
-}
 
 void error_open_file(String text) {
   server.send(200, "text/html", text);
@@ -263,7 +289,66 @@ void clean() {
   } else {
      error_open_file("ERROR - open SSPIFFS Library"); 
   }
-
 }
 
+/***
+String autocomplete(String content) {
+  bool fs = SPIFFS.begin();
+  bool exist = SPIFFS.exists("/network");
 
+  if(exist) {
+
+    Serial.println("2");
+
+    String row;
+    File config = SPIFFS.open("/network", "r");
+    row = config.readString();
+    config.close();
+
+    content.replace("{hostname}", "value=\"" + split(row, ',', 1)+ "\"");
+    content.replace("{checked}", split(row, ',', 2));
+    content.replace("{ip}", "value=\"" + split(row, ',', 3)+ "\"");
+    content.replace("{subnet}", "value=\"" + split(row, ',', 4)+ "\"");
+    content.replace("{gateway}", "value=\"" + split(row, ',', 5)+ "\"");
+    content.replace("{dns}", "value=\"" + split(row, ',', 6)+ "\"");
+    content.replace("{dns_2}", "value=\"" + split(row, ',', 7)+ "\"");
+    content.replace("{ssid}", networks());
+   // content.replace("{}", "value=\"" + split(row, ',', 9)+ "\""); 
+    content.replace("{password}", "value=\"" + split(row, ',', 10)+ "\"");
+    content.replace("{admin}", "value=\"" + split(row, ',', 11)+ "\"");
+
+  } else {
+    Serial.println("3");
+    content.replace("{hostname}", "");
+    content.replace("{checked}", "");
+    content.replace("{ip}", "");
+    content.replace("{subnet}", "");
+    content.replace("{gateway}", "");
+    content.replace("{dns}", "");
+    content.replace("{dns_2}", "");
+    content.replace("{ssid}", "");
+   // content.replace("{}", "value=\"" + split(row, ',', 9)+ "\""); 
+    content.replace("{password}", "");
+    content.replace("{admin}", "");
+  }
+  return content;
+}
+
+String networks() {
+ String ssids;
+ int n = WiFi.scanNetworks();
+
+  int indices[n];
+  for (int i = 0; i < n; i++) {
+    indices[i] = i;
+  }
+
+ for(int j=0; j < n; j++) {
+   Serial.println(WiFi.SSID(indices[j]));
+   Serial.println("\n");
+
+   ssids += "<option>" + WiFi.SSID(indices[j]) + "</option>";
+ }
+ return ssids;
+}
+*/

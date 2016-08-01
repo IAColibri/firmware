@@ -27,7 +27,8 @@ bool initApp() {
   String ssid = split(row, ',', 8);
   String password = split(row, ',', 10);
 
-  /** detail verbosity
+  /***
+  // detail verbosity
   Serial.begin(9600);
   Serial.println(row + "\n");
   Serial.println("\n" + hostname + "\n");
@@ -35,8 +36,8 @@ bool initApp() {
   Serial.println("\n" + gateway.toString() + "\n");
   Serial.println("\n" + subnet.toString() + "\n");
   Serial.println("\n" + ssid + "\n");
-  Serial.println("\n" + password + "\n"); */
-
+  Serial.println("\n" + password + "\n"); 
+  */
   WiFi.hostname(hostname);
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid.c_str(), password.c_str());
@@ -45,10 +46,6 @@ bool initApp() {
   Serial.begin(9600);
   while(WiFi.status() != WL_CONNECTED) {
     delay(500);
-    if(times > 1000) {
-      Serial.println("RESET !");
-      reset_device();
-    }
     Serial.println("<<"+ String(times) + ">>");
     times++;
   }

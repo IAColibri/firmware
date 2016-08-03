@@ -8,6 +8,9 @@
 #include "config.h"
 #include "control.h"
 
+#include <Wire.h>
+#include "Adafruit_MCP23017.h"
+
 bool ok;
 String _log;
 ESP8266WebServer server(80);
@@ -23,17 +26,27 @@ int low = 0;
 
 bool configuration = true;
 
+const int sensor = 3;
+int sensorState;
 /**
  WiFiServer TCPServer(81);
 */
 
+
+Adafruit_MCP23017 mcp;
+
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
 
   /* ***
   * Initialize GPIO00 resetButton  
   *** */
   pinMode(buttonPin, INPUT);
+
+  /* ***
+   * Initialize GPIO03 open/close sensor
+   **** */
+  pinMode(sensor, INPUT_PULLUP);
 
   /* ***
   * Initialize GPIO02 relayPin
@@ -97,20 +110,27 @@ void loop(void) {
   }
   */
 
+  // read sensor
+  sensorState = digitalRead(sensor);
+  Serial.print("sensor: ");
+  Serial.println(sensorState);
   /***
   // read reset button */
   buttonState = digitalRead(buttonPin);
-  
   if(buttonState == HIGH) {
     status_button = "high";
+    Serial.println("0: " + status_button);
   } else {
     status_button = "low";   
+    Serial.println("0: " + status_button);
+    /**
     if(low > 5000) { 
       Serial.println("CLEAN!!");
       clean(); 
-    }
+    }*/
     low++;
   }
+  delay(1000);
 }
 
 /** 
@@ -127,6 +147,8 @@ void deviceWebServer() {
   server.on("/on.html", handleOn);
   server.on("/off.html", handleOff);
 
+  server.on("/sensor.html", handleSensor);
+
   server.onNotFound(handleNotFound);
   const char *headerkeys[] = {"User-Agent", "Cookie"};
   size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
@@ -136,6 +158,18 @@ void deviceWebServer() {
 
 void handleIndex() {
   server.send(200, "text/html", layout("welcome"));
+}
+
+void handleSensor() {
+  String layout;
+
+  if(sensorState == HIGH) {
+    layout = "CLOSED";
+  } else {
+    layout = "OPENED";
+  }
+  
+  server.send(200, "text/html", layout);
 }
 
 void handleOn() {
@@ -171,6 +205,7 @@ void handleConfigUpdate() {
 void deviceConfigInterface() {
   server.on("/", handleHome);
   server.on("/save.html", handleConfigurationSave);
+  server.on("/restart.html", handleRestart);
 
   server.onNotFound(handleNotFound);
   const char *headerkeys[] = {"User-Agent", "Cookie"};
@@ -221,6 +256,12 @@ void handleHome() {
     server.send(200, "text/html", layout("form"));
 }
 
+void handleRestart() {
+  String layout = "restart";
+  ESP.restart();
+  server.send(200, "text/html", layout);
+}
+
 void handleConfigurationSave() {
   bool fs = SPIFFS.begin();
 
@@ -269,17 +310,23 @@ String layout(String file_name) {
       }*/
 
       main.close();
+
       String menu = "";
-      if(!configuration) {
+      if(configuration) {
         File menu_file = SPIFFS.open("/menu.html", "r");
         menu = menu_file.readString();
-        menue_file.close();
+        menu_file.close();
       }
 
-      content.replace("{menu}", menu);
-      content.replace("{reset_status}", status_button);
-
+      layout.replace("{menu}", menu);
       layout.replace("{content}", content);
+
+      if(sensorState == HIGH) {
+        layout.replace("{status_door}", "CLOSED");
+      } else {
+        layout.replace("{status_door}", "OPENED");
+      }
+
       layout.replace("{status_button}", status_button);
     } else {
         return "Exception - No such file found. ["+file_name+"]" ;
@@ -368,4 +415,4 @@ String networks() {
  }
  return ssids;
 }
-*/
+t*/

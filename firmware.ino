@@ -21,6 +21,8 @@ int buttonState = 0;
 String status_button;
 int low = 0;
 
+bool configuration = true;
+
 /**
  WiFiServer TCPServer(81);
 */
@@ -39,13 +41,13 @@ void setup() {
   pinMode(relayPin, OUTPUT);
   pinMode(relayPin, LOW);
 
-
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
   bool fs = SPIFFS.begin();
   if(fs) {
      ok = SPIFFS.exists("/ok");
+     configuration = !ok;
      if(ok) {
       /* ***
        * if the configuration is ok
@@ -97,22 +99,15 @@ void loop(void) {
 
   /***
   // read reset button */
-
   buttonState = digitalRead(buttonPin);
   
   if(buttonState == HIGH) {
     status_button = "high";
-  pinMode(relayPin, LOW);
-    Serial.println("high");
-    digitalWrite(relayPin, LOW);
   } else {
-    Serial.println("low");
-    pinMode(relayPin, HIGH);
-    delay(500);
     status_button = "low";   
-    if(low > 500) { 
+    if(low > 5000) { 
       Serial.println("CLEAN!!");
-      // clean(); 
+      clean(); 
     }
     low++;
   }
@@ -129,6 +124,9 @@ void deviceWebServer() {
   server.on("/network.html", handleConfigNetwork);
   server.on("/update.html", handleConfigUpdate);
 
+  server.on("/on.html", handleOn);
+  server.on("/off.html", handleOff);
+
   server.onNotFound(handleNotFound);
   const char *headerkeys[] = {"User-Agent", "Cookie"};
   size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
@@ -138,6 +136,17 @@ void deviceWebServer() {
 
 void handleIndex() {
   server.send(200, "text/html", layout("welcome"));
+}
+
+void handleOn() {
+  String layout = "on";
+  pinMode(relayPin, HIGH);
+  server.send(200, "text/html", layout);
+}
+void handleOff() {
+  String layout = "off";
+  pinMode(relayPin, LOW);
+  server.send(200, "text/html", layout);
 }
 
 void handleStatus() {
@@ -260,6 +269,14 @@ String layout(String file_name) {
       }*/
 
       main.close();
+      String menu = "";
+      if(!configuration) {
+        File menu_file = SPIFFS.open("/menu.html", "r");
+        menu = menu_file.readString();
+        menue_file.close();
+      }
+
+      content.replace("{menu}", menu);
       content.replace("{reset_status}", status_button);
 
       layout.replace("{content}", content);

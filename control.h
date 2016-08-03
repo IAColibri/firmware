@@ -27,7 +27,6 @@ bool initApp() {
   String ssid = split(row, ',', 8);
   String password = split(row, ',', 10);
 
-  /***
   // detail verbosity
   Serial.begin(9600);
   Serial.println(row + "\n");
@@ -37,7 +36,7 @@ bool initApp() {
   Serial.println("\n" + subnet.toString() + "\n");
   Serial.println("\n" + ssid + "\n");
   Serial.println("\n" + password + "\n"); 
-  */
+  
   WiFi.hostname(hostname);
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid.c_str(), password.c_str());

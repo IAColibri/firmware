@@ -1,15 +1,10 @@
 #include <ESP8266WiFi.h>
-
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
-#include <WiFiClient.h>
 
 #include "FS.h"
 #include "config.h"
 #include "control.h"
-
-#include <Wire.h>
-#include "Adafruit_MCP23017.h"
 
 bool ok;
 String _log;
@@ -18,42 +13,16 @@ ESP8266WebServer server(80);
 bool reset = false;
 
 const int buttonPin = 0;
-int relayPin = 2;
+int relayPin = 3;
 
 int buttonState = 0;
-String status_button;
 int low = 0;
-
 bool configuration = true;
 
-const int sensor = 3;
+const int sensor = 2;
 int sensorState;
-/**
- WiFiServer TCPServer(81);
-*/
-
-
-Adafruit_MCP23017 mcp;
 
 void setup() {
-  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
-
-  /* ***
-  * Initialize GPIO00 resetButton  
-  *** */
-  pinMode(buttonPin, INPUT);
-
-  /* ***
-   * Initialize GPIO03 open/close sensor
-   **** */
-  pinMode(sensor, INPUT_PULLUP);
-
-  /* ***
-  * Initialize GPIO02 relayPin
-  *** */
-  pinMode(relayPin, OUTPUT);
-  pinMode(relayPin, LOW);
-
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
@@ -62,6 +31,23 @@ void setup() {
      ok = SPIFFS.exists("/ok");
      configuration = !ok;
      if(ok) {
+
+      /* ***
+      * Initialize GPIO00 resetButton  
+      *** */
+      pinMode(buttonPin, INPUT_PULLUP);
+
+      /* ***
+       * Initialize GPIO02 open/close sensor
+       **** */
+      pinMode(sensor, INPUT);
+
+      /* ***
+      * Initialize GPIO03 relayPin
+      *** */
+      pinMode(relayPin, OUTPUT);
+      pinMode(relayPin, LOW);
+
       /* ***
        * if the configuration is ok
        * then open in device mode from control.h
@@ -96,41 +82,20 @@ void setup() {
 void loop(void) {
   server.handleClient();
 
-  /**
-  WiFiClient client = TCPServer.available();
-  if (client){
-    Serial.println("Client connected");
-    while (client.connected()){
-      // Read the incoming TCP command
-      String command = client.readStringUntil('\n');
-      // Debugging display command
-      command.trim();
-      Serial.println(command);
-    }
-  }
-  */
-
   // read sensor
   sensorState = digitalRead(sensor);
-  Serial.print("sensor: ");
-  Serial.println(sensorState);
+  
   /***
   // read reset button */
   buttonState = digitalRead(buttonPin);
   if(buttonState == HIGH) {
-    status_button = "high";
-    Serial.println("0: " + status_button);
   } else {
-    status_button = "low";   
-    Serial.println("0: " + status_button);
-    /**
     if(low > 5000) { 
       Serial.println("CLEAN!!");
       clean(); 
-    }*/
+    }
     low++;
   }
-  delay(1000);
 }
 
 /** 
@@ -312,7 +277,7 @@ String layout(String file_name) {
       main.close();
 
       String menu = "";
-      if(configuration) {
+      if(!configuration) {
         File menu_file = SPIFFS.open("/menu.html", "r");
         menu = menu_file.readString();
         menu_file.close();
@@ -327,7 +292,11 @@ String layout(String file_name) {
         layout.replace("{status_door}", "OPENED");
       }
 
-      layout.replace("{status_button}", status_button);
+      if(buttonState == HIGH) {
+        layout.replace("{status_button}", "NO PRESSED");
+      } else {
+        layout.replace("{status_button}", "PRESSED");
+      }
     } else {
         return "Exception - No such file found. ["+file_name+"]" ;
     }

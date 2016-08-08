@@ -10,8 +10,6 @@ bool ok;
 String _log;
 ESP8266WebServer server(80);
 
-bool reset = false;
-
 const int buttonPin = 0;
 int relayPin = 3;
 
@@ -23,6 +21,7 @@ const int sensor = 2;
 int sensorState;
 
 void setup() {
+  Serial.begin(9600);
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
@@ -31,7 +30,6 @@ void setup() {
      ok = SPIFFS.exists("/ok");
      configuration = !ok;
      if(ok) {
-
       /* ***
       * Initialize GPIO00 resetButton  
       *** */
@@ -306,7 +304,6 @@ String layout(String file_name) {
     }
  }
 
-
 void error_open_file(String text) {
   server.send(200, "text/html", text);
 }
@@ -316,7 +313,6 @@ void clean() {
   if(fs) {
    bool ok_file = SPIFFS.remove("/ok");
    if(ok_file) {
-     reset = true;
    }
    ESP.restart();
   } else {

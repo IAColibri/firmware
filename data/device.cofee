@@ -1,0 +1,18 @@
+# ######################
+# device javascript
+# day: 08 August, Mon 2016
+(($) ->
+
+) jQuery
+
+update = ->
+  data = $.get("sensor.md", (data) ->
+    $(".status_door").html(data)
+  , "text")
+  $.get("button.md", (data) ->
+    $(".status_button").text(data)
+  , "text")
+
+$(document).ready( ->
+  setInterval(update, 1000)
+)

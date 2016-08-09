@@ -75,6 +75,19 @@ h3 {
     text-decoration: none;
 }
 
+
+.button-success {
+        color: white;
+        border-radius: 4px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+	background: rgb(28, 184, 65);
+}
+
+.push-button {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
 .content-subhead {
     text-transform: uppercase;
     color: #aaa;

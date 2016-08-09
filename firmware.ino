@@ -107,10 +107,13 @@ void deviceWebServer() {
   server.on("/network.html", handleConfigNetwork);
   server.on("/update.html", handleConfigUpdate);
 
+  server.on("/push_button.html", handlePushButton);
+
   server.on("/on.html", handleOn);
   server.on("/off.html", handleOff);
 
-  server.on("/sensor.html", handleSensor);
+  server.on("/sensor.md", handleSensor);
+  server.on("/button.md", handleButton);
 
   server.onNotFound(handleNotFound);
   const char *headerkeys[] = {"User-Agent", "Cookie"};
@@ -121,6 +124,26 @@ void deviceWebServer() {
 
 void handleIndex() {
   server.send(200, "text/html", layout("welcome"));
+}
+
+void handlePushButton() {
+  pinMode(relayPin, HIGH);
+  pinMode(relayPin, LOW);
+
+  String layout;
+  layout = "CONFIRM\n";
+  server.send(200, "text/html", layout);
+
+}
+
+void handleButton() {
+  String layout;
+  if(buttonState == HIGH) {
+    layout = "NO PRESSED";
+  } else {
+    layout = "PRESSED";
+  }
+  server.send(200, "text/html", layout);
 }
 
 void handleSensor() {
@@ -150,6 +173,7 @@ void handleStatus() {
   String layout = "status";
   server.send(200, "text/html", layout);
 }
+
 void handleConfigNetwork() {
   String layout = "config network";
   server.send(200, "text/html", layout);
@@ -184,6 +208,8 @@ bool loadFromSpiffs(String path){
   if(path.endsWith(".src")) path = path.substring(0, path.lastIndexOf("."));
     else if(path.endsWith(".htm")) dataType = "text/html";
     else if(path.endsWith(".html")) dataType = "text/html";
+    else if(path.endsWith(".md")) dataType = "text/html";
+
     else if(path.endsWith(".css")) dataType = "text/css";
     else if(path.endsWith(".js")) dataType = "application/javascript";
     else if(path.endsWith(".png")) dataType = "image/png";
@@ -320,7 +346,7 @@ void clean() {
   }
 }
 
-/***
+/*
 String autocomplete(String content) {
   bool fs = SPIFFS.begin();
   bool exist = SPIFFS.exists("/network");
@@ -362,7 +388,8 @@ String autocomplete(String content) {
   }
   return content;
 }
-
+*/
+  /**
 String networks() {
  String ssids;
  int n = WiFi.scanNetworks();

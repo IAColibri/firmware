@@ -1,11 +1,13 @@
- <!DOCTYPE html>
- <html lang="en">
-   <head>
-     <meta charset="UTF-8">
-     <title>Network Configuration</title>
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+    <meta charset=utf-8>
+    <title>Network Configuration</title>
      <link rel="stylesheet" href="/css/pure-min.css">
      <link rel="stylesheet" href="/css/grids-responsive-min.css">
      <link rel="stylesheet" href="/css/styles.css">
+
+     <script src="/device.js"></script> 
      <meta name="viewport" content="width=device-width, initial-scale=1.0">
    </head>
    <body>
@@ -39,14 +41,11 @@
     <div class="footer">
     <div class="pure-menu pure-menu-horizontal">
     <ul>
-
-
-      <li class="pure-menu-item">Door Status: {status_door}</li>
-      <li class="pure-menu-item">Status Button: {status_button}</li>
-
-    <li class="pure-menu-item"><a href="#" class="pure-menu-link">About</a></li>
-    <li class="pure-menu-item"><a href="#" class="pure-menu-link">Twitter</a></li>
-    <li class="pure-menu-item"><a href="#" class="pure-menu-link">GitHub</a></li>
+      <li class="pure-menu-item"><a href="#" class="pure-menu-link">Door: <span class="status_door">{status_door}</span></a></li>
+      <li class="pure-menu-item"><a href="#" class="pure-menu-link">Button: <span class="status_button">{status_button}</span></a></li>
+      <li class="pure-menu-item"><a href="/about.html" class="pure-menu-link">About</a></li>
+      <li class="pure-menu-item"><a href="https://twitter.com/gsgerman" class="pure-menu-link">Twitter</a></li>
+      <li class="pure-menu-item"><a href="https://github.com/IAColibri" class="pure-menu-link">GitHub</a></li>
     </ul>
     </div>
     </div>

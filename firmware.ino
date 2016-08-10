@@ -3,13 +3,11 @@
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
 #include <WiFiClient.h>
+#include <SoftwareSerial.h>
 
 #include "FS.h"
 #include "config.h"
 #include "control.h"
-
-#include <Wire.h>
-#include "Adafruit_MCP23017.h"
 
 bool ok;
 String _log;
@@ -26,18 +24,17 @@ int low = 0;
 
 bool configuration = true;
 
-const int sensor = 3;
-int sensorState;
+// const int sensor = 3;
+// int sensorState;
 /**
  WiFiServer TCPServer(81);
 */
 
-
-Adafruit_MCP23017 mcp;
+SoftwareSerial ESPserial(2, 3); // RX | TX
 
 void setup() {
-  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
 
+  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
   /* ***
   * Initialize GPIO00 resetButton  
   *** */
@@ -46,7 +43,9 @@ void setup() {
   /* ***
    * Initialize GPIO03 open/close sensor
    **** */
-  pinMode(sensor, INPUT_PULLUP);
+
+  //  pinMode(sensor, INPUT);
+  ESPserial.begin(9600);
 
   /* ***
   * Initialize GPIO02 relayPin
@@ -111,9 +110,15 @@ void loop(void) {
   */
 
   // read sensor
-  sensorState = digitalRead(sensor);
-  Serial.print("sensor: ");
-  Serial.println(sensorState);
+ // sensorState = digitalRead(sensor);
+ //  Serial.print("sensor: ");
+ //  Serial.println(sensorState);
+
+  // listen for communication from the ESP8266 and then write it to the serial monitor
+  if ( ESPserial.available() )   {  Serial.write( ESPserial.read() );  }
+  // listen for user input and send it to the ESP8266
+  if ( Serial.available() )       {  ESPserial.write( Serial.read() );  }
+
   /***
   // read reset button */
   buttonState = digitalRead(buttonPin);
@@ -312,7 +317,7 @@ String layout(String file_name) {
       main.close();
 
       String menu = "";
-      if(configuration) {
+      if(!configuration) {
         File menu_file = SPIFFS.open("/menu.html", "r");
         menu = menu_file.readString();
         menu_file.close();

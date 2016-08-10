@@ -1,23 +1,22 @@
-    <section class="post">
-	 <ul class="pure-menu-list">
+ <section class="post">
+<div class="pure-menu custom-restricted-width">
+	<ul class="pure-menu-list">
+		<li class="pure-menu-heading">Users:</li>
 		{list-users}
 	</ul>
+</div>
 	<br />
-	<form class="pure-form pure-form-stacked">
-	    <fieldset>
+	<form action="/user-save.html" method="post"  class="pure-form pure-form-stacked">
+    <fieldset>
 		<legend>Add new User:</legend>
 		<label for="username">Username</label>
-		<input type="username" id="username" placeholder="Username">
-
+		<input type="text" id="username" name="username" placeholder="Username">
 		<label for="password">Password</label>
-		<input type="password" id="password" placeholder="Password">
-
+		<input type="password" id="password" name="password" placeholder="Password">
 		<label for="email">Email</label>
-		<input type="email" id="email" placeholder="Email">
-
+		<input type="email" id="email" name="email" placeholder="Email">
 		<label for="mac">Enabled Mac Address of Device (Cell Phone/Tablet/Computer)</label>
-		<input type="mac" id="mac" placeholder="mac">
-
+		<input type="text" id="mac" name="mac" placeholder="00:00:00:00:00:00">
 		<label for="remember">
 		    <input id="remember" type="checkbox"> Is Administrator
 		</label>

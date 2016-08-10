@@ -15,7 +15,9 @@
 		status_button[i].innerText= response;
 	}
     });
+  return true;
   };
+
 }).call(this);
 
 var HttpClient = function() {
@@ -37,6 +39,6 @@ function push_button() {
 			status_button[i].innerText= response;
 		}
 	});
-
+  return true;
 }
 setInterval(update, 1000 * 60 * 1);

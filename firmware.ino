@@ -1,6 +1,6 @@
 #include <ESP8266WiFi.h>
+#include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <WebSocketsServer.h>
 
 #include "FS.h"
 #include "config.h"
@@ -101,42 +101,209 @@ void loop(void) {
 * @url "/" and "status.html" and "network.html"
 * @url "update.html"
 */
+String admin_password() {
+  String row;
+  bool fs = SPIFFS.begin();
+  bool exist = SPIFFS.exists("/network");
+  if(exist) {
+    File config = SPIFFS.open("/network", "r");
+    row = config.readString();
+    config.close();
+  } else {
+    return "Error";
+  }
+  String password = split(row, ',', 11);
+  _log += password + "<br />";
+  return password;
+}
+
+bool is_authentified(){
+  if (server.hasHeader("Cookie")){
+    String cookie = server.header("Cookie");
+    _log += "~~ " + cookie + " ~~ <br />";
+    if (cookie.indexOf("ESPSESSIONID=1") != -1) {
+      _log += "auth true";
+      return true;
+    }
+  }
+  _log += "auth false";
+  return false;
+}
+
+bool auth(String username, String password) {
+  String row;
+
+  if((username == "admin") && (password == admin_password())) {
+    _log = "true <br />";
+    return true;
+  } else {
+    File users = SPIFFS.open("/users", "r");
+     if(!users) {
+        _log = "false <br />";
+        return false;
+     } else {
+      while(users.available()) {
+        row =  users.readString();
+        _log += username + " -> "+ split(row, ',', 1) + " :: " + password + " -> " + split(row, ',', 2) + "<br />";
+        if((username == split(row, ',', 1)) && (password == split(row, ',', 2))) {
+          _log += "~~>" +  split(row, ',', 1)+" && " + split(row, ',', 2) + "<br />";
+          _log = "true <br />";
+          return true;
+        }
+      }
+    } 
+    users.close();
+  }
+  _log = "false <br />";
+  return false;
+}
+
 void deviceWebServer() {
-  server.on("/", handleIndex);
-  server.on("/status.html", handleStatus);
-  server.on("/network.html", handleConfigNetwork);
-  server.on("/update.html", handleConfigUpdate);
 
+  server.on("/", handleWelcome);
+  server.on("/login.html", handleLogin);
+//  server.on("/status.html", handleStatus);
+//  server.on("/network.html", handleConfigNetwork);
+//  server.on("/update.html", handleConfigUpdate);
+  server.on("/user-manager.html", handleUserManager);
+  server.on("/user-save.html", handleUserSave);
   server.on("/push_button.html", handlePushButton);
-
   server.on("/on.html", handleOn);
   server.on("/off.html", handleOff);
-
   server.on("/sensor.md", handleSensor);
   server.on("/button.md", handleButton);
-
   server.onNotFound(handleNotFound);
-  const char *headerkeys[] = {"User-Agent", "Cookie"};
+
+  const char *headerkeys[] = {"User-Agent", "Authorization"};
   size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
   server.collectHeaders(headerkeys, headerkeyssize);
+
   server.begin();
 }
 
-void handleIndex() {
+void handleLogin() {
+  String msg;
+
+  const char *headerkeys[] = {"User-Agent", "Cookie", "Authorization"};
+  size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
+  server.collectHeaders(headerkeys, headerkeyssize);
+  for (int i = 0; i < 10; ++i) {
+     _log += "-- " + server.headerName(i) + " :: " + server.header(i) +"-- <br />";
+   }
+
+  if (server.hasHeader("Cookie")){
+    String cookie = server.header("Cookie");
+    _log += "<>" + cookie + "<br />";
+  }
+
+  if (server.hasArg("DISCONNECT")){
+    String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=0\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n"; 
+    server.sendContent(header);
+    return;
+  }
+
+  if (server.hasArg("username") && server.hasArg("password")){
+    if (auth(server.arg("username"), server.arg("password"))){
+      String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=1\r\nLocation: /\r\nCache-Control: no-cache\r\n\r\n";
+      server.sendContent(header);
+      return;
+    }
+    msg = "Wrong username/password! try again.";
+  }
+  server.send(200, "text/html", layout("login"));
+}
+
+bool validate() {
+  String header;
+  if (!is_authentified()){
+    server.sendHeader("Location","/login.html");
+    _log += "(validate) Error<br />";
+    server.sendHeader("Cache-Control","no-cache");
+    server.send(301);
+    return false;
+  }
+  return true;
+}
+
+void handleWelcome() {
+  if(!validate()) { return; }
+
+  _log += "(handleWelcome) Good<br />";
   server.send(200, "text/html", layout("welcome"));
 }
 
-void handlePushButton() {
-  pinMode(relayPin, HIGH);
-  pinMode(relayPin, LOW);
+void handleUserManager() {
+  if(!validate()) { return; }
 
+  _log += "(handleUserManager) Good<br />";
+  server.send(200, "text/html", layout("user-manager"));
+}
+
+void handleUserSave() {
+  if(!validate()) { return; }
+
+  bool fs = SPIFFS.begin();
+  String line = "";
+  if(fs) {
+   File users = SPIFFS.open("/users", "a");
+   for(int i = 0; i < server.args(); i++) {
+    line += server.arg(i) + ",";
+   }
+   users.print(line + "\n");
+   users.close();
+   server.send(200, "text/html", layout("user-save"));
+  } else {
+     error_open_file("ERROR - open SSPIFFS Library"); 
+  }
+}
+
+String listUsers() {
+  bool fs = SPIFFS.begin();
+  String listUsers = "";
+  int count = 0;
+  String auxiliar;
+  String row;
+
+  File html = SPIFFS.open("/list-users.html", "r");
+  String design = html.readString(); 
+  html.close();
+
+  File users = SPIFFS.open("/users", "r");
+  if(!users) {
+    return "<li>NO USERS.</li>";
+  } else {
+    while(users.available()) {
+      auxiliar = design;
+      row =  users.readStringUntil('\n');
+
+      auxiliar.replace("{id}", String(count)); 
+      auxiliar.replace("{name}", split(row, ',', 1));
+      auxiliar.replace("{mac}", split(row, ',', 4));
+
+      listUsers += auxiliar + "\n";
+    count++;
+    }
+  }
+  users.close();
+  return listUsers;
+}
+
+void handlePushButton() {
+  if(!validate()) { return; }
+  
+  pinMode(relayPin, HIGH);
+  delay(1000);
+  pinMode(relayPin, LOW);
+  delay(1000);
   String layout;
   layout = "CONFIRM\n";
-  server.send(200, "text/html", layout);
 
+  server.send(200, "text/html", layout);
 }
 
 void handleButton() {
+  if(!validate()) { return; }
+
   String layout;
   if(buttonState == HIGH) {
     layout = "NO PRESSED";
@@ -147,6 +314,8 @@ void handleButton() {
 }
 
 void handleSensor() {
+  if(!validate()) { return; }
+
   String layout;
 
   if(sensorState == HIGH) {
@@ -159,16 +328,21 @@ void handleSensor() {
 }
 
 void handleOn() {
+  if(!validate()) { return; }
+
   String layout = "on";
   pinMode(relayPin, HIGH);
   server.send(200, "text/html", layout);
 }
 void handleOff() {
+  if(!validate()) { return; }
+   
   String layout = "off";
   pinMode(relayPin, LOW);
   server.send(200, "text/html", layout);
 }
 
+/**
 void handleStatus() {
   String layout = "status";
   server.send(200, "text/html", layout);
@@ -182,7 +356,7 @@ void handleConfigUpdate() {
   String layout = "config update";
   server.send(200, "text/html", layout);
 }
-
+*/
 
 /** 
 * Server the configurations urls
@@ -292,11 +466,10 @@ String layout(String file_name) {
       
       int size = main.size();
       content = main.readString();
-/**
-      if(file_name.equals("form")) {
-        Serial.println("1");
-        content = autocomplete(content);
-      }*/
+
+      if(file_name.equals("user-manager")) {
+        content.replace("{list-users}", listUsers());
+      }
 
       main.close();
 
@@ -305,6 +478,16 @@ String layout(String file_name) {
         File menu_file = SPIFFS.open("/menu.html", "r");
         menu = menu_file.readString();
         menu_file.close();
+      }
+
+      if(file_name.equals("login")) {
+        layout.replace("{menu}", "");
+        layout.replace("{status_door}", "-");
+        layout.replace("{status_button}", "-");
+        for(int i = 0; i < server.args(); i++) {
+           _log += "~> " + server.argName(i) + ": " + server.arg(i)+ "<br />";
+        }
+        content = _log +"<br />"+ server.arg("username")+","+ server.arg("password") + "\n" + content;
       }
 
       layout.replace("{menu}", menu);

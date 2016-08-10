@@ -3,6 +3,8 @@
 String localIP;
 
 bool initApp() {
+  const int buttonPin = 0;
+  int buttonState = HIGH;
 
   WiFi.mode(WIFI_STA);
 
@@ -43,9 +45,10 @@ bool initApp() {
 
   int times = 0;
   Serial.begin(9600);
-  while(WiFi.status() != WL_CONNECTED) {
+  while((WiFi.status() != WL_CONNECTED) && (buttonState == HIGH)) {
     delay(500);
     Serial.println("<<"+ String(times) + ">>");
+    buttonState = digitalRead(buttonPin);
     times++;
   }
  

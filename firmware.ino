@@ -1,9 +1,10 @@
 #include <ESP8266WiFi.h>
-
-#include <ESP8266WebServer.h>
-#include <WebSocketsServer.h>
 #include <WiFiClient.h>
+<<<<<<< HEAD
 #include <SoftwareSerial.h>
+=======
+#include <ESP8266WebServer.h>
+>>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
 
 #include "FS.h"
 #include "config.h"
@@ -13,17 +14,14 @@ bool ok;
 String _log;
 ESP8266WebServer server(80);
 
-bool reset = false;
-
 const int buttonPin = 0;
-int relayPin = 2;
+int relayPin = 3;
 
 int buttonState = 0;
-String status_button;
 int low = 0;
-
 bool configuration = true;
 
+<<<<<<< HEAD
 // const int sensor = 3;
 // int sensorState;
 /**
@@ -53,6 +51,13 @@ void setup() {
   pinMode(relayPin, OUTPUT);
   pinMode(relayPin, LOW);
 
+=======
+const int sensor = 2;
+int sensorState;
+
+void setup() {
+  Serial.begin(9600);
+>>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
@@ -61,6 +66,22 @@ void setup() {
      ok = SPIFFS.exists("/ok");
      configuration = !ok;
      if(ok) {
+      /* ***
+      * Initialize GPIO00 resetButton  
+      *** */
+      pinMode(buttonPin, INPUT_PULLUP);
+
+      /* ***
+       * Initialize GPIO02 open/close sensor
+       **** */
+      pinMode(sensor, INPUT);
+
+      /* ***
+      * Initialize GPIO03 relayPin
+      *** */
+      pinMode(relayPin, OUTPUT);
+      pinMode(relayPin, LOW);
+
       /* ***
        * if the configuration is ok
        * then open in device mode from control.h
@@ -95,21 +116,8 @@ void setup() {
 void loop(void) {
   server.handleClient();
 
-  /**
-  WiFiClient client = TCPServer.available();
-  if (client){
-    Serial.println("Client connected");
-    while (client.connected()){
-      // Read the incoming TCP command
-      String command = client.readStringUntil('\n');
-      // Debugging display command
-      command.trim();
-      Serial.println(command);
-    }
-  }
-  */
-
   // read sensor
+<<<<<<< HEAD
  // sensorState = digitalRead(sensor);
  //  Serial.print("sensor: ");
  //  Serial.println(sensorState);
@@ -119,23 +127,21 @@ void loop(void) {
   // listen for user input and send it to the ESP8266
   if ( Serial.available() )       {  ESPserial.write( Serial.read() );  }
 
+=======
+  sensorState = digitalRead(sensor);
+  
+>>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
   /***
   // read reset button */
   buttonState = digitalRead(buttonPin);
   if(buttonState == HIGH) {
-    status_button = "high";
-    Serial.println("0: " + status_button);
   } else {
-    status_button = "low";   
-    Serial.println("0: " + status_button);
-    /**
     if(low > 5000) { 
       Serial.println("CLEAN!!");
       clean(); 
-    }*/
+    }
     low++;
   }
-  delay(1000);
 }
 
 /** 
@@ -143,29 +149,221 @@ void loop(void) {
 * @url "/" and "status.html" and "network.html"
 * @url "update.html"
 */
-void deviceWebServer() {
-  server.on("/", handleIndex);
-  server.on("/status.html", handleStatus);
-  server.on("/network.html", handleConfigNetwork);
-  server.on("/update.html", handleConfigUpdate);
+String admin_password() {
+  String row;
+  bool fs = SPIFFS.begin();
+  bool exist = SPIFFS.exists("/network");
+  if(exist) {
+    File config = SPIFFS.open("/network", "r");
+    row = config.readString();
+    config.close();
+  } else {
+    return "Error";
+  }
+  String password = split(row, ',', 11);
+  _log += password + "<br />";
+  return password;
+}
 
+bool is_authentified(){
+  if (server.hasHeader("Cookie")){
+    String cookie = server.header("Cookie");
+    _log += "~~ " + cookie + " ~~ <br />";
+    if (cookie.indexOf("ESPSESSIONID=1") != -1) {
+      _log += "auth true";
+      return true;
+    }
+  }
+  _log += "auth false";
+  return false;
+}
+
+bool auth(String username, String password) {
+  String row;
+
+  if((username == "admin") && (password == admin_password())) {
+    _log = "true <br />";
+    return true;
+  } else {
+    File users = SPIFFS.open("/users", "r");
+     if(!users) {
+        _log = "false <br />";
+        return false;
+     } else {
+      while(users.available()) {
+        row =  users.readString();
+        _log += username + " -> "+ split(row, ',', 1) + " :: " + password + " -> " + split(row, ',', 2) + "<br />";
+        if((username == split(row, ',', 1)) && (password == split(row, ',', 2))) {
+          _log += "~~>" +  split(row, ',', 1)+" && " + split(row, ',', 2) + "<br />";
+          _log = "true <br />";
+          return true;
+        }
+      }
+    } 
+    users.close();
+  }
+  _log = "false <br />";
+  return false;
+}
+
+void deviceWebServer() {
+
+  server.on("/", handleWelcome);
+  server.on("/login.html", handleLogin);
+//  server.on("/status.html", handleStatus);
+//  server.on("/network.html", handleConfigNetwork);
+//  server.on("/update.html", handleConfigUpdate);
+  server.on("/user-manager.html", handleUserManager);
+  server.on("/user-save.html", handleUserSave);
+  server.on("/push_button.html", handlePushButton);
   server.on("/on.html", handleOn);
   server.on("/off.html", handleOff);
-
-  server.on("/sensor.html", handleSensor);
-
+  server.on("/sensor.md", handleSensor);
+  server.on("/button.md", handleButton);
   server.onNotFound(handleNotFound);
-  const char *headerkeys[] = {"User-Agent", "Cookie"};
+
+  const char *headerkeys[] = {"User-Agent", "Authorization"};
   size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
   server.collectHeaders(headerkeys, headerkeyssize);
+
   server.begin();
 }
 
-void handleIndex() {
+void handleLogin() {
+  String msg;
+
+  const char *headerkeys[] = {"User-Agent", "Cookie", "Authorization"};
+  size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
+  server.collectHeaders(headerkeys, headerkeyssize);
+  for (int i = 0; i < 10; ++i) {
+     _log += "-- " + server.headerName(i) + " :: " + server.header(i) +"-- <br />";
+   }
+
+  if (server.hasHeader("Cookie")){
+    String cookie = server.header("Cookie");
+    _log += "<>" + cookie + "<br />";
+  }
+
+  if (server.hasArg("DISCONNECT")){
+    String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=0\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n"; 
+    server.sendContent(header);
+    return;
+  }
+
+  if (server.hasArg("username") && server.hasArg("password")){
+    if (auth(server.arg("username"), server.arg("password"))){
+      String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=1\r\nLocation: /\r\nCache-Control: no-cache\r\n\r\n";
+      server.sendContent(header);
+      return;
+    }
+    msg = "Wrong username/password! try again.";
+  }
+  server.send(200, "text/html", layout("login"));
+}
+
+bool validate() {
+  String header;
+  if (!is_authentified()){
+    server.sendHeader("Location","/login.html");
+    _log += "(validate) Error<br />";
+    server.sendHeader("Cache-Control","no-cache");
+    server.send(301);
+    return false;
+  }
+  return true;
+}
+
+void handleWelcome() {
+  if(!validate()) { return; }
+
+  _log += "(handleWelcome) Good<br />";
   server.send(200, "text/html", layout("welcome"));
 }
 
+void handleUserManager() {
+  if(!validate()) { return; }
+
+  _log += "(handleUserManager) Good<br />";
+  server.send(200, "text/html", layout("user-manager"));
+}
+
+void handleUserSave() {
+  if(!validate()) { return; }
+
+  bool fs = SPIFFS.begin();
+  String line = "";
+  if(fs) {
+   File users = SPIFFS.open("/users", "a");
+   for(int i = 0; i < server.args(); i++) {
+    line += server.arg(i) + ",";
+   }
+   users.print(line + "\n");
+   users.close();
+   server.send(200, "text/html", layout("user-save"));
+  } else {
+     error_open_file("ERROR - open SSPIFFS Library"); 
+  }
+}
+
+String listUsers() {
+  bool fs = SPIFFS.begin();
+  String listUsers = "";
+  int count = 0;
+  String auxiliar;
+  String row;
+
+  File html = SPIFFS.open("/list-users.html", "r");
+  String design = html.readString(); 
+  html.close();
+
+  File users = SPIFFS.open("/users", "r");
+  if(!users) {
+    return "<li>NO USERS.</li>";
+  } else {
+    while(users.available()) {
+      auxiliar = design;
+      row =  users.readStringUntil('\n');
+
+      auxiliar.replace("{id}", String(count)); 
+      auxiliar.replace("{name}", split(row, ',', 1));
+      auxiliar.replace("{mac}", split(row, ',', 4));
+
+      listUsers += auxiliar + "\n";
+    count++;
+    }
+  }
+  users.close();
+  return listUsers;
+}
+
+void handlePushButton() {
+  if(!validate()) { return; }
+  
+  pinMode(relayPin, HIGH);
+  delay(1000);
+  pinMode(relayPin, LOW);
+  delay(1000);
+  String layout;
+  layout = "CONFIRM\n";
+
+  server.send(200, "text/html", layout);
+}
+
+void handleButton() {
+  if(!validate()) { return; }
+
+  String layout;
+  if(buttonState == HIGH) {
+    layout = "NO PRESSED";
+  } else {
+    layout = "PRESSED";
+  }
+  server.send(200, "text/html", layout);
+}
+
 void handleSensor() {
+  if(!validate()) { return; }
+
   String layout;
 
   if(sensorState == HIGH) {
@@ -178,20 +376,26 @@ void handleSensor() {
 }
 
 void handleOn() {
+  if(!validate()) { return; }
+
   String layout = "on";
   pinMode(relayPin, HIGH);
   server.send(200, "text/html", layout);
 }
 void handleOff() {
+  if(!validate()) { return; }
+   
   String layout = "off";
   pinMode(relayPin, LOW);
   server.send(200, "text/html", layout);
 }
 
+/**
 void handleStatus() {
   String layout = "status";
   server.send(200, "text/html", layout);
 }
+
 void handleConfigNetwork() {
   String layout = "config network";
   server.send(200, "text/html", layout);
@@ -200,7 +404,7 @@ void handleConfigUpdate() {
   String layout = "config update";
   server.send(200, "text/html", layout);
 }
-
+*/
 
 /** 
 * Server the configurations urls
@@ -226,6 +430,8 @@ bool loadFromSpiffs(String path){
   if(path.endsWith(".src")) path = path.substring(0, path.lastIndexOf("."));
     else if(path.endsWith(".htm")) dataType = "text/html";
     else if(path.endsWith(".html")) dataType = "text/html";
+    else if(path.endsWith(".md")) dataType = "text/html";
+
     else if(path.endsWith(".css")) dataType = "text/css";
     else if(path.endsWith(".js")) dataType = "application/javascript";
     else if(path.endsWith(".png")) dataType = "image/png";
@@ -308,11 +514,10 @@ String layout(String file_name) {
       
       int size = main.size();
       content = main.readString();
-/**
-      if(file_name.equals("form")) {
-        Serial.println("1");
-        content = autocomplete(content);
-      }*/
+
+      if(file_name.equals("user-manager")) {
+        content.replace("{list-users}", listUsers());
+      }
 
       main.close();
 
@@ -321,6 +526,16 @@ String layout(String file_name) {
         File menu_file = SPIFFS.open("/menu.html", "r");
         menu = menu_file.readString();
         menu_file.close();
+      }
+
+      if(file_name.equals("login")) {
+        layout.replace("{menu}", "");
+        layout.replace("{status_door}", "-");
+        layout.replace("{status_button}", "-");
+        for(int i = 0; i < server.args(); i++) {
+           _log += "~> " + server.argName(i) + ": " + server.arg(i)+ "<br />";
+        }
+        content = _log +"<br />"+ server.arg("username")+","+ server.arg("password") + "\n" + content;
       }
 
       layout.replace("{menu}", menu);
@@ -332,7 +547,11 @@ String layout(String file_name) {
         layout.replace("{status_door}", "OPENED");
       }
 
-      layout.replace("{status_button}", status_button);
+      if(buttonState == HIGH) {
+        layout.replace("{status_button}", "NO PRESSED");
+      } else {
+        layout.replace("{status_button}", "PRESSED");
+      }
     } else {
         return "Exception - No such file found. ["+file_name+"]" ;
     }
@@ -341,7 +560,6 @@ String layout(String file_name) {
       return "ERROR - open SSPIFFS Library"; 
     }
  }
-
 
 void error_open_file(String text) {
   server.send(200, "text/html", text);
@@ -352,7 +570,6 @@ void clean() {
   if(fs) {
    bool ok_file = SPIFFS.remove("/ok");
    if(ok_file) {
-     reset = true;
    }
    ESP.restart();
   } else {
@@ -360,7 +577,7 @@ void clean() {
   }
 }
 
-/***
+/*
 String autocomplete(String content) {
   bool fs = SPIFFS.begin();
   bool exist = SPIFFS.exists("/network");
@@ -402,7 +619,8 @@ String autocomplete(String content) {
   }
   return content;
 }
-
+*/
+  /**
 String networks() {
  String ssids;
  int n = WiFi.scanNetworks();

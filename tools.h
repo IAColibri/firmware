@@ -43,3 +43,6 @@ void reset_device() {
     Serial.println("ERROR - open SSPIFFS Library"); 
   }
 }
+
+
+

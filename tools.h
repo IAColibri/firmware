@@ -47,6 +47,28 @@ IPAddress getIp(String ip_string){
   return ip;
 }
 
+bool update_user(int id, String row) {
+ File users = SPIFFS.open("/users", "r");
+ int count = 1;
+ String content = users.readString();
+ users.close();
+ String user;
+
+ bool remove = SPIFFS.remove("/users");
+
+ File new_user = SPIFFS.open("/users", "a");
+  while(count <= counter(content, '\n')) {
+    user = split(content, '\n', count);
+    if(count != (id+1)) {
+      new_user.print(user + "\n");
+    } else {
+      new_user.print(row + "\n");
+    }
+    count++;
+  }
+  new_user.close();
+}
+
 bool remove_user(int id) {
  File users = SPIFFS.open("/users", "r");
  int count = 1;
@@ -54,9 +76,9 @@ bool remove_user(int id) {
  users.close();
  String user;
 
-// bool remove = SPIFFS.remove("/users");
- bool remove = SPIFFS.remove("/users_1");
- File new_user = SPIFFS.open("/users_1", "a");
+ bool remove = SPIFFS.remove("/users");
+ File new_user = SPIFFS.open("/users", "a");
+
   while(count <= counter(content, '\n')) {
     user = split(content, '\n', count);
     if(count != (id+1)) {

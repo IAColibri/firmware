@@ -164,6 +164,7 @@ void deviceWebServer() {
 
   server.on("/user-manager.html", handleUserManager);
   server.on("/user-save.html", handleUserSave);
+  server.on("/user-update.html", handleUserUpdate);
   server.on("/remove.html", handleRemove);
 
   server.on("/edit.html", handleUserEdit);
@@ -230,6 +231,7 @@ void handleUserManager() {
   if(!validate()) { return; }
   server.send(200, "text/html", layout("user-manager"));
 }
+
 void handleUserSave() {
   if(!validate()) { return; }
   bool fs = SPIFFS.begin();
@@ -246,6 +248,22 @@ void handleUserSave() {
      error_open_file("ERROR - open SSPIFFS Library"); 
   }
 }
+
+void handleUserUpdate() {
+  if(!validate()) { return; }
+  int id = server.arg("id").toInt();
+  String line;
+
+  for(int i = 0; i < server.args(); i++) {
+    if(i != 0) {
+      line += server.arg(i) + ",";
+    }
+  }
+
+  update_user(id, line);
+  server.send(200, "text/html", layout("update-user"));
+}
+
 String listUsers() {
   bool fs = SPIFFS.begin();
   String listUsers = "";

@@ -19,8 +19,12 @@
           <input id="dns" name="dns" type="text" placeholder="192.168.1.1" {dns}>
           <label for="dns_2">Secondary DNS</label>
           <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0" {dns_2}>
+
           <label for="ssid">SSID</label>
-          <input type="text" id="ssid" name="ssid" />
+          <select id="ssid" name="ssid">
+            <option>Select ssid</option>
+            {ssid}
+          </select>
 
           <label for="encryption">Use Encryption</label>
           <select id="encryption" name="encryption">

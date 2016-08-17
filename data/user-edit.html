@@ -1,0 +1,25 @@
+ <section class="post">
+  <h2>User Update:</h2>
+
+	<form action="/user-update.html" method="post"  class="pure-form pure-form-stacked">
+    <fieldset>
+		<legend>Add new User:</legend>
+		<label for="username">Username</label>
+    <input type="text" id="username" name="username" {username} placeholder="Username">
+		<label for="password">Password</label>
+    <input type="password" id="password" name="password" {password} placeholder="Password">
+		<label for="email">Email</label>
+    <input type="email" id="email" name="email" {email} placeholder="Email">
+		<label for="mac">Enabled Mac Address of Device (Cell Phone/Tablet/Computer)</label>
+    <input type="text" id="mac" name="mac" {mac} placeholder="00:00:00:00:00:00">
+		<label for="remember">
+      <input id="remember" {checked} type="checkbox"> Is Administrator
+		</label>
+		<br />
+
+      <a href="/remove.html?id={id}" class="pure-button button-error">Delete User</a>
+
+  		<button type="submit" class="pure-button pure-button-primary">Update User</button>
+	  </fieldset>
+	</form>
+</section>

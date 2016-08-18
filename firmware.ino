@@ -55,6 +55,11 @@ void setup() {
 const int sensor = 2;
 int sensorState;
 
+bool login = false;
+
+// Initialize the client library
+WiFiClient client;
+
 void setup() {
   Serial.begin(9600);
 >>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
@@ -161,20 +166,17 @@ String admin_password() {
     return "Error";
   }
   String password = split(row, ',', 11);
-  _log += password + "<br />";
   return password;
 }
 
 bool is_authentified(){
+  return login;
   if (server.hasHeader("Cookie")){
     String cookie = server.header("Cookie");
-    _log += "~~ " + cookie + " ~~ <br />";
     if (cookie.indexOf("ESPSESSIONID=1") != -1) {
-      _log += "auth true";
       return true;
     }
   }
-  _log += "auth false";
   return false;
 }
 
@@ -182,44 +184,44 @@ bool auth(String username, String password) {
   String row;
 
   if((username == "admin") && (password == admin_password())) {
-    _log = "true <br />";
     return true;
   } else {
     File users = SPIFFS.open("/users", "r");
      if(!users) {
-        _log = "false <br />";
         return false;
      } else {
       while(users.available()) {
         row =  users.readString();
-        _log += username + " -> "+ split(row, ',', 1) + " :: " + password + " -> " + split(row, ',', 2) + "<br />";
         if((username == split(row, ',', 1)) && (password == split(row, ',', 2))) {
-          _log += "~~>" +  split(row, ',', 1)+" && " + split(row, ',', 2) + "<br />";
-          _log = "true <br />";
           return true;
         }
       }
     } 
     users.close();
   }
-  _log = "false <br />";
   return false;
 }
 
 void deviceWebServer() {
-
   server.on("/", handleWelcome);
   server.on("/login.html", handleLogin);
 //  server.on("/status.html", handleStatus);
-//  server.on("/network.html", handleConfigNetwork);
-//  server.on("/update.html", handleConfigUpdate);
+  server.on("/network-info.html", handleConfigNetwork);
+  server.on("/network-update.html", handleConfigNetworkUpdate);
+  server.on("/update.html", handleConfigUpdate);
+
   server.on("/user-manager.html", handleUserManager);
   server.on("/user-save.html", handleUserSave);
+  server.on("/user-update.html", handleUserUpdate);
+  server.on("/remove.html", handleRemove);
+
+  server.on("/edit.html", handleUserEdit);
   server.on("/push_button.html", handlePushButton);
   server.on("/on.html", handleOn);
   server.on("/off.html", handleOff);
   server.on("/sensor.md", handleSensor);
   server.on("/button.md", handleButton);
+  server.on("/logout.html", handleLogout);
   server.onNotFound(handleNotFound);
 
   const char *headerkeys[] = {"User-Agent", "Authorization"};
@@ -231,27 +233,21 @@ void deviceWebServer() {
 
 void handleLogin() {
   String msg;
-
   const char *headerkeys[] = {"User-Agent", "Cookie", "Authorization"};
   size_t headerkeyssize = sizeof(headerkeyssize)/sizeof(char*);
   server.collectHeaders(headerkeys, headerkeyssize);
-  for (int i = 0; i < 10; ++i) {
-     _log += "-- " + server.headerName(i) + " :: " + server.header(i) +"-- <br />";
-   }
-
   if (server.hasHeader("Cookie")){
     String cookie = server.header("Cookie");
-    _log += "<>" + cookie + "<br />";
   }
-
   if (server.hasArg("DISCONNECT")){
+    login = false;
     String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=0\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n"; 
     server.sendContent(header);
     return;
   }
-
   if (server.hasArg("username") && server.hasArg("password")){
     if (auth(server.arg("username"), server.arg("password"))){
+      login = true;
       String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=1\r\nLocation: /\r\nCache-Control: no-cache\r\n\r\n";
       server.sendContent(header);
       return;
@@ -260,36 +256,32 @@ void handleLogin() {
   }
   server.send(200, "text/html", layout("login"));
 }
-
 bool validate() {
   String header;
   if (!is_authentified()){
     server.sendHeader("Location","/login.html");
-    _log += "(validate) Error<br />";
     server.sendHeader("Cache-Control","no-cache");
     server.send(301);
     return false;
   }
   return true;
 }
-
+void handleLogout() {
+  if(!validate()) { return; }
+  login = false;
+  server.send(200, "text/html", layout("logout"));
+}
 void handleWelcome() {
   if(!validate()) { return; }
-
-  _log += "(handleWelcome) Good<br />";
   server.send(200, "text/html", layout("welcome"));
 }
-
 void handleUserManager() {
   if(!validate()) { return; }
-
-  _log += "(handleUserManager) Good<br />";
   server.send(200, "text/html", layout("user-manager"));
 }
 
 void handleUserSave() {
   if(!validate()) { return; }
-
   bool fs = SPIFFS.begin();
   String line = "";
   if(fs) {
@@ -305,17 +297,30 @@ void handleUserSave() {
   }
 }
 
+void handleUserUpdate() {
+  if(!validate()) { return; }
+  int id = server.arg("id").toInt();
+  String line;
+
+  for(int i = 0; i < server.args(); i++) {
+    if(i != 0) {
+      line += server.arg(i) + ",";
+    }
+  }
+
+  update_user(id, line);
+  server.send(200, "text/html", layout("update-user"));
+}
+
 String listUsers() {
   bool fs = SPIFFS.begin();
   String listUsers = "";
   int count = 0;
   String auxiliar;
   String row;
-
   File html = SPIFFS.open("/list-users.html", "r");
   String design = html.readString(); 
   html.close();
-
   File users = SPIFFS.open("/users", "r");
   if(!users) {
     return "<li>NO USERS.</li>";
@@ -323,11 +328,9 @@ String listUsers() {
     while(users.available()) {
       auxiliar = design;
       row =  users.readStringUntil('\n');
-
       auxiliar.replace("{id}", String(count)); 
       auxiliar.replace("{name}", split(row, ',', 1));
       auxiliar.replace("{mac}", split(row, ',', 4));
-
       listUsers += auxiliar + "\n";
     count++;
     }
@@ -338,20 +341,17 @@ String listUsers() {
 
 void handlePushButton() {
   if(!validate()) { return; }
-  
   pinMode(relayPin, HIGH);
   delay(1000);
   pinMode(relayPin, LOW);
   delay(1000);
   String layout;
   layout = "CONFIRM\n";
-
   server.send(200, "text/html", layout);
 }
 
 void handleButton() {
   if(!validate()) { return; }
-
   String layout;
   if(buttonState == HIGH) {
     layout = "NO PRESSED";
@@ -363,28 +363,23 @@ void handleButton() {
 
 void handleSensor() {
   if(!validate()) { return; }
-
   String layout;
-
   if(sensorState == HIGH) {
     layout = "CLOSED";
   } else {
     layout = "OPENED";
   }
-  
   server.send(200, "text/html", layout);
 }
 
 void handleOn() {
   if(!validate()) { return; }
-
   String layout = "on";
   pinMode(relayPin, HIGH);
   server.send(200, "text/html", layout);
 }
 void handleOff() {
   if(!validate()) { return; }
-   
   String layout = "off";
   pinMode(relayPin, LOW);
   server.send(200, "text/html", layout);
@@ -395,16 +390,63 @@ void handleStatus() {
   String layout = "status";
   server.send(200, "text/html", layout);
 }
+*/
+void handleConfigNetworkUpdate() {  
+  if(!validate()) { return; }
+  server.send(200, "text/html", layout("network-update"));
+}
 
 void handleConfigNetwork() {
-  String layout = "config network";
-  server.send(200, "text/html", layout);
+  if(!validate()) { return; }
+  server.send(200, "text/html", layout("network-info"));
 }
-void handleConfigUpdate() {  
-  String layout = "config update";
-  server.send(200, "text/html", layout);
+
+void handleUserEdit() {
+  if(!validate()) { return; }
+
+  IPAddress ip = client.remoteIP();
+  uint16_t port = client.remotePort();
+
+  _log += "IP: " + ip.toString() +"\n";
+  _log += "Port: " + String(port) + "\n";
+
+  server.send(200, "text/html", layout("user-edit"));
 }
-*/
+
+
+void handleRemove() {
+  if(!validate()) { return; }
+  int id = server.arg("id").toInt();
+
+  remove_user(id);
+  server.send(200, "text/html", layout("remove"));
+}
+
+void handleConfigUpdate() {
+  if(!validate()) { return; }
+
+  bool fs = SPIFFS.begin();
+
+  if(fs) {
+   File net = SPIFFS.open("/network", "w");
+   for(int i = 0; i < server.args(); i++) {
+     if((i == 1) && (server.args() == 10)) {
+      net.print(",");
+     }
+     net.print(server.arg(i) + ",");
+   }
+   net.close();
+  
+   File ok_file = SPIFFS.open("/ok", "w");
+   ok_file.print("true");
+   ok_file.close();
+
+   server.send(200, "text/html", layout("save"));
+  } else {
+     error_open_file("ERROR - open SSPIFFS Library"); 
+  }
+}
+
 
 /** 
 * Server the configurations urls
@@ -462,7 +504,6 @@ void handleNotFound() {
  @url successfull page (successfull.html) / error page (error.html)
  *** */
 
-
 void handleHome() {
     server.send(200, "text/html", layout("form"));
 }
@@ -518,8 +559,15 @@ String layout(String file_name) {
       if(file_name.equals("user-manager")) {
         content.replace("{list-users}", listUsers());
       }
-
       main.close();
+
+      if(file_name.equals("form") || file_name.equals("network-update")|| file_name.equals("network-info")) {
+        content = autocomplete(content);
+      }
+
+      if(file_name.equals("user-edit")) {
+        content = user_autocomplete(content);
+      }
 
       String menu = "";
       if(!configuration) {
@@ -532,19 +580,20 @@ String layout(String file_name) {
         layout.replace("{menu}", "");
         layout.replace("{status_door}", "-");
         layout.replace("{status_button}", "-");
-        for(int i = 0; i < server.args(); i++) {
-           _log += "~> " + server.argName(i) + ": " + server.arg(i)+ "<br />";
-        }
-        content = _log +"<br />"+ server.arg("username")+","+ server.arg("password") + "\n" + content;
       }
 
       layout.replace("{menu}", menu);
-      layout.replace("{content}", content);
+      layout.replace("{content}", 
+          content + 
+          "<hr /><textarea>" + 
+          _log + "\n" + 
+          file_log("users_1") + 
+          "</textarea>");
 
       if(sensorState == HIGH) {
-        layout.replace("{status_door}", "CLOSED");
-      } else {
         layout.replace("{status_door}", "OPENED");
+      } else {
+        layout.replace("{status_door}", "CLOSED");
       }
 
       if(buttonState == HIGH) {
@@ -577,20 +626,48 @@ void clean() {
   }
 }
 
-/*
+String user_autocomplete(String content) {
+  String rows;
+  String row;
+
+  int id = server.arg("id").toInt();
+  _log += "~> " +  String(id) + "\n";
+
+  content.replace("{id}", String(id));
+
+  File users = SPIFFS.open("/users", "r"); 
+
+  if(!users) {
+    content.replace("{username}", "");
+    content.replace("{password}", "");
+    content.replace("{email}", "");
+    content.replace("{mac}", "");
+    content.replace("{checked}", ""); 
+  } else {
+   rows =  users.readString(); 
+   row = user(rows, id);
+
+   _log += row + "\n";
+
+    content.replace("{username}", "value=\"" + split(row, ',', 1)+ "\"");
+    content.replace("{password}", "value=\"" + split(row, ',', 2)+ "\"");
+    content.replace("{email}", "value=\"" + split(row, ',', 3)+ "\"");
+    content.replace("{mac}", "value=\"" + split(row, ',', 4)+ "\"");
+  /** split(row, ',', 5)
+  content.replace("{checked}", "value=\"" ++ "\""); */
+  }
+  return content;
+}
+
 String autocomplete(String content) {
   bool fs = SPIFFS.begin();
   bool exist = SPIFFS.exists("/network");
 
   if(exist) {
-
-    Serial.println("2");
-
     String row;
     File config = SPIFFS.open("/network", "r");
     row = config.readString();
     config.close();
-
     content.replace("{hostname}", "value=\"" + split(row, ',', 1)+ "\"");
     content.replace("{checked}", split(row, ',', 2));
     content.replace("{ip}", "value=\"" + split(row, ',', 3)+ "\"");
@@ -598,13 +675,15 @@ String autocomplete(String content) {
     content.replace("{gateway}", "value=\"" + split(row, ',', 5)+ "\"");
     content.replace("{dns}", "value=\"" + split(row, ',', 6)+ "\"");
     content.replace("{dns_2}", "value=\"" + split(row, ',', 7)+ "\"");
-    content.replace("{ssid}", networks());
-   // content.replace("{}", "value=\"" + split(row, ',', 9)+ "\""); 
+
+    if(ok) {
+      content.replace("{ssid}", "value=\"" + split(row, ',', 8)+"\""); 
+    } else {
+      content.replace("{ssid}", networks(split(row, ',', 8))); 
+    }
     content.replace("{password}", "value=\"" + split(row, ',', 10)+ "\"");
     content.replace("{admin}", "value=\"" + split(row, ',', 11)+ "\"");
-
   } else {
-    Serial.println("3");
     content.replace("{hostname}", "");
     content.replace("{checked}", "");
     content.replace("{ip}", "");
@@ -612,30 +691,28 @@ String autocomplete(String content) {
     content.replace("{gateway}", "");
     content.replace("{dns}", "");
     content.replace("{dns_2}", "");
-    content.replace("{ssid}", "");
-   // content.replace("{}", "value=\"" + split(row, ',', 9)+ "\""); 
+    content.replace("{ssid}", networks(""));
     content.replace("{password}", "");
     content.replace("{admin}", "");
   }
   return content;
 }
-*/
-  /**
-String networks() {
+
+String networks(String ssid) {
  String ssids;
  int n = WiFi.scanNetworks();
 
-  int indices[n];
-  for (int i = 0; i < n; i++) {
+ int indices[n];
+ for (int i = 0; i < n; i++) {
     indices[i] = i;
-  }
-
+ }
  for(int j=0; j < n; j++) {
-   Serial.println(WiFi.SSID(indices[j]));
-   Serial.println("\n");
-
-   ssids += "<option>" + WiFi.SSID(indices[j]) + "</option>";
+   if(WiFi.SSID(indices[j]).equals(ssid)) {
+     ssids += "<option selected>" + WiFi.SSID(indices[j]) +"</option>";
+   } else {
+     ssids += "<option>" + WiFi.SSID(indices[j]) +"</option>";
+   }
  }
  return ssids;
 }
-t*/
+

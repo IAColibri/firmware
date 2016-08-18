@@ -25,12 +25,81 @@ String split(String line, char splitter, int index) {
   return line.substring(init_flag, last_flag);
 }
 
+int counter(String line, char element) {
+  int times = 0;
+  for(int i=0; i<line.length(); i++) {
+    if(line.charAt(i) == element) {
+      times++;
+    }
+  }
+  return times;
+}
+
+String user(String users, int id) {
+  return split(users, '\n', id + 1);
+}
+
 IPAddress getIp(String ip_string){
   IPAddress ip ((uint8_t) split(ip_string, '.', 1).toInt(), 
           (uint8_t) split(ip_string, '.', 2).toInt(),  
           (uint8_t) split(ip_string, '.', 3).toInt(),  
           (uint8_t) split(ip_string, '.', 4).toInt());
   return ip;
+}
+
+bool update_user(int id, String row) {
+ File users = SPIFFS.open("/users", "r");
+ int count = 1;
+ String content = users.readString();
+ users.close();
+ String user;
+
+ bool remove = SPIFFS.remove("/users");
+
+ File new_user = SPIFFS.open("/users", "a");
+  while(count <= counter(content, '\n')) {
+    user = split(content, '\n', count);
+    if(count != (id+1)) {
+      new_user.print(user + "\n");
+    } else {
+      new_user.print(row + "\n");
+    }
+    count++;
+  }
+  new_user.close();
+}
+
+bool remove_user(int id) {
+ File users = SPIFFS.open("/users", "r");
+ int count = 1;
+ String content = users.readString();
+ users.close();
+ String user;
+
+ bool remove = SPIFFS.remove("/users");
+ File new_user = SPIFFS.open("/users", "a");
+
+  while(count <= counter(content, '\n')) {
+    user = split(content, '\n', count);
+    if(count != (id+1)) {
+      new_user.print(user + "\n");
+    }
+    count++;
+  }
+  new_user.close();
+}
+
+String file_log(String name) {
+  String content;
+  bool fs = SPIFFS.begin();
+  if(SPIFFS.exists("/"+ name)) {
+    File file = SPIFFS.open("/" + name, "r");
+    content = file.readString();
+    file.close();
+  } else {
+    content = "none\n";
+  }
+  return content;
 }
 
 void reset_device() {

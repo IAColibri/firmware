@@ -1,31 +1,33 @@
     <section class="post">
           <h2 class="post-title">Save Network Configuration</h2>
-          
+        
           <form class="pure-form pure-form-stacked" method="POST" action="/save.html">
           <fieldset>
           <legend>Wlan</legend>
           <label for="hostname">Host Name</label>
           <input id="hostname" name="hostname" type="text" {hostname}  placeholder="Hostname">
-          <label for="remember" class="pure-checkbox">
-            <input id="remember" name="dhcp_client" type="checkbox" {checked}> Enabled DHCP
+          <label for="dhcp" class="pure-checkbox">
+            <input id="dhcp" name="dhcp_client" type="checkbox" onclick="enable_dhcp_client();" {checked}> Enabled DHCP
           </label>
-          <label for="ip">IP Address</label>
-          <input id="ip" name="ip"  type="text" placeholder="Ip Address" {ip}>
-          <label for="subnet_mask">Subnet Mask</label>
-          <input id="subnet_mask" name="subnet_mask"  type="text" placeholder="255.255.255.0" {subnet}>
-          <label for="gateway">Gateway</label>
-          <input id="gateway" name="gateway" type="text" placeholder="192.168.1.1" {gateway}>
-          <label for="dns">Primary DNS</label>
-          <input id="dns" name="dns" type="text" placeholder="192.168.1.1" {dns}>
-          <label for="dns_2">Secondary DNS</label>
-          <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0" {dns_2}>
 
+	<span id="static_configuration" class="static_configuration">
+
+          <label for="ip">IP Address</label>
+          <input id="ip" name="ip"  type="text" placeholder="Ip Address" onkeyup="validate_ip(this);" {ip}> <span id="ip_legend"></span>
+          <label for="subnet_mask">Subnet Mask</label>
+          <input id="subnet_mask" name="subnet_mask"  type="text" placeholder="255.255.255.0" onkeyup="validate_ip(this);" {subnet}> <span id="subnet_mask_legend"></span>
+          <label for="gateway">Gateway</label>
+          <input id="gateway" name="gateway" type="text" placeholder="192.168.1.1" onkeyup="validate_ip(this);" {gateway}> <span id="gateway_legend"></span>
+          <label for="dns">Primary DNS</label>
+          <input id="dns" name="dns" type="text" placeholder="192.168.1.1" onkeyup="validate_ip(this);" {dns}> <span id="dns_legend"></span>
+          <label for="dns_2">Secondary DNS</label>
+          <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0" onkeyup="validate_ip(this);" {dns_2}> <span id="dns_2_legend"></span>
+	</span>
           <label for="ssid">SSID</label>
           <select id="ssid" name="ssid">
             <option>Select ssid</option>
             {ssid}
           </select>
-
           <label for="encryption">Use Encryption</label>
           <select id="encryption" name="encryption">
             <option value="0" >None</option>
@@ -42,7 +44,6 @@
           <br />
           <label for="admin">Administrator Password:</label>
           <input id="admin" name="admin" type="text" placeholder="password" {admin}>
-
           <button type="submit" class="pure-button pure-button-primary">Save Configuration</button>
           </fieldset>
           </form>

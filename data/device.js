@@ -51,3 +51,76 @@ function push_button() {
 }
 setInterval(update, 1000 * 60 * 1);
 
+function enable_dhcp_client() {
+	box = document.getElementById("static_configuration");
+	check = document.getElementById("dhcp");
+	if(check.checked) {
+		box.style.display = "none";
+
+		ip = document.getElementById("ip");
+		ip.value = "auto";
+		subnet_mask = document.getElementById("subnet_mask");
+		subnet_mask.value = "auto";
+		gateway = document.getElementById("gateway");
+		gateway.value = "auto";
+		dns = document.getElementById("dns");
+		dns.value = "auto";
+		dns_2 = document.getElementById("dns_2");
+		dns_2.value = "auto";
+	} else {
+		box.style.display = "block";
+
+		ip = document.getElementById("ip");
+		ip.value = "";
+		validate_ip(ip);
+
+		subnet_mask = document.getElementById("subnet_mask");
+		subnet_mask.value = "";
+		validate_ip(subnet_mask);
+
+		gateway = document.getElementById("gateway");
+		gateway.value = "";
+		validate_ip(gateway);
+
+		dns = document.getElementById("dns");
+		dns.value = "";
+		validate_ip(dns);
+
+		dns_2 = document.getElementById("dns_2");
+		dns_2.value = "";
+		validate_ip(dns_2);
+	}
+
+  return true;
+}
+
+function validate_ip(ip) {
+	if(
+	(regular_expresion = /^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$/.test(ip.value))
+	|| (ip.value == "")
+	) {
+		if(ip.value == "") {
+			ip.style.borderColor = "";
+			ip.style.borderWidth = "";
+			success = document.getElementById(ip.getAttribute("name")+"_legend");
+			success.innerText = "";
+			success.style.color = "";
+			return true;
+		} else {
+			ip.style.borderColor = "green";
+			ip.style.borderWidth = "4px";
+			success = document.getElementById(ip.getAttribute("name")+"_legend");
+			success.innerText = "Success - Ip Address is valid.";
+			success.style.color = "green";
+		}
+	} else 	{
+		ip.style.borderColor = "red";
+		ip.style.borderWidth = "4px";
+
+		error = document.getElementById(ip.getAttribute("name")+"_legend");
+		error.innerText = "Error - Ip Address not valid.";
+		error.style.color = "red";
+	}
+	return true;
+}
+

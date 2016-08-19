@@ -44,7 +44,6 @@ bool initApp() {
   WiFi.begin(ssid.c_str(), password.c_str());
 
   int times = 0;
-  Serial.begin(9600);
   while((WiFi.status() != WL_CONNECTED) && (buttonState == HIGH)) {
     delay(500);
     Serial.println("<<"+ String(times) + ">>");

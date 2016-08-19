@@ -478,7 +478,7 @@ void handleConfigurationSave() {
      net.print(server.arg(i) + ",");
    }
    net.close();
-  
+ 
    File ok_file = SPIFFS.open("/ok", "w");
    ok_file.print("true");
    ok_file.close();
@@ -538,6 +538,8 @@ String layout(String file_name) {
       layout.replace("{content}", 
           content + 
           "<hr /><textarea>" + 
+          file_log("network") + "\n" +
+          "|||||||||||||||||||||||||||||\n" + 
           _log + "\n" + 
           file_log("users_1") + 
           "</textarea>");

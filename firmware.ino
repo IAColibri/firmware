@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <PubSubClient.h>
 
 #include "FS.h"
 #include "config.h"
@@ -22,8 +23,9 @@ int sensorState;
 
 bool login = false;
 
-// Initialize the client library
-WiFiClient client;
+WiFiClient espClient;
+const char* mqtt_server = "192.168.1.103";
+PubSubClient client(espClient);
 
 void setup() {
   Serial.begin(9600);
@@ -50,6 +52,9 @@ void setup() {
       *** */
       pinMode(relayPin, OUTPUT);
       pinMode(relayPin, LOW);
+
+      client.setServer(mqtt_server, 1883);
+      client.setCallback(callback);
 
       /* ***
        * if the configuration is ok
@@ -85,19 +90,26 @@ void setup() {
 void loop(void) {
   server.handleClient();
 
-  // read sensor
-  sensorState = digitalRead(sensor);
-  
-  /***
-  // read reset button */
-  buttonState = digitalRead(buttonPin);
-  if(buttonState == HIGH) {
-  } else {
-    if(low > 5000) { 
-      Serial.println("CLEAN!!");
-      clean(); 
-    }
-    low++;
+
+  if(ok) {
+   // read sensor
+   sensorState = digitalRead(sensor);
+   /***
+   // read reset button */
+   buttonState = digitalRead(buttonPin);
+   if(buttonState == HIGH) {
+   } else {
+     if(low > 5000) { 
+       Serial.println("CLEAN!!");
+       clean(); 
+     }
+     low++;
+   }
+
+   if (!client.connected()) {
+     reconnect();
+   }
+   client.loop();
   }
 }
 
@@ -355,13 +367,13 @@ void handleConfigNetwork() {
 
 void handleUserEdit() {
   if(!validate()) { return; }
-
+/**
   IPAddress ip = client.remoteIP();
   uint16_t port = client.remotePort();
 
   _log += "IP: " + ip.toString() +"\n";
   _log += "Port: " + String(port) + "\n";
-
+*/
   server.send(200, "text/html", layout("user-edit"));
 }
 
@@ -623,7 +635,14 @@ String autocomplete(String content) {
     row = config.readString();
     config.close();
     content.replace("{hostname}", "value=\"" + split(row, ',', 1)+ "\"");
-    content.replace("{checked}", split(row, ',', 2));
+
+    String dhcp = split(row, ',', 2);
+    if(dhcp.equals("on")) {
+      content.replace("{checked}", "CHECKED");
+    } else {
+      content.replace("{checked}", "");
+    }
+
     content.replace("{ip}", "value=\"" + split(row, ',', 3)+ "\"");
     content.replace("{subnet}", "value=\"" + split(row, ',', 4)+ "\"");
     content.replace("{gateway}", "value=\"" + split(row, ',', 5)+ "\"");
@@ -668,5 +687,35 @@ String networks(String ssid) {
    }
  }
  return ssids;
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  // Switch on the LED if an 1 was received as first character
+  if ((char)payload[0] == '1') {
+    digitalWrite(relayPin, HIGH);   // Turn the LED on (Note that LOW is the voltage level
+    // but actually the LED is on; this is because
+    // it is acive low on the ESP-01)
+  } else {
+    digitalWrite(relayPin, LOW);  // Turn the LED off by making the voltage HIGH
+  }
+
+  digitalWrite(relayPin, HIGH);   // Turn the LED on (Note that LOW is the voltage level
+  client.publish("/wiicontrol/topic/0", "Light On ->" + (char)payload[0]);
+  client.publish("/wiicontrol/topic/1", topic);
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    // Attempt to connect
+    if (client.connect("WiiControl332")) {
+      // Once connected, publish an announcement...
+      client.publish("wiicontrol", "hello world");
+      // ... and resubscribe
+      client.subscribe("wiicontrol");
+    } else {
+       delay(5000);
+    }
+  }
 }
 

@@ -9,6 +9,8 @@
           <label for="remember" class="pure-checkbox">
             <input id="remember" name="dhcp_client" type="checkbox" {checked}> Enabled DHCP
           </label>
+
+	<span id="static_configuration" class="static_configuration">
           <label for="ip">IP Address</label>
           <input id="ip" name="ip"  type="text" placeholder="Ip Address" {ip}>
           <label for="subnet_mask">Subnet Mask</label>
@@ -19,6 +21,8 @@
           <input id="dns" name="dns" type="text" placeholder="192.168.1.1" {dns}>
           <label for="dns_2">Secondary DNS</label>
           <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0" {dns_2}>
+   </span>          
+
           <label for="ssid">SSID</label>
           <input type="text" id="ssid" name="ssid" {ssid} />
 
@@ -44,3 +48,6 @@
           </form>
     </section>
 
+<script>
+  enable_dhcp_client();
+</script>

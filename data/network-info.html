@@ -1,7 +1,6 @@
     <section class="post">
           <h2 class="post-title">Network Information</h2>
           <p>Current configuration of device.</p>
-          
           <form class="pure-form pure-form-stacked" method="POST" action="/save.html">
           <fieldset>
           <legend>Wlan</legend>
@@ -10,6 +9,7 @@
           <label for="remember" class="pure-checkbox">
             <input id="remember" name="dhcp_client" type="checkbox" {checked} disabled /> Enabled DHCP
           </label>
+	<span id="static_configuration" class="static_configuration">
           <label for="ip">IP Address</label>
           <input id="ip" name="ip"  type="text" placeholder="Ip Address" {ip} disabled />
           <label for="subnet_mask">Subnet Mask</label>
@@ -20,10 +20,9 @@
           <input id="dns" name="dns" type="text" placeholder="192.168.1.1" {dns} disabled />
           <label for="dns_2">Secondary DNS</label>
           <input id="dns_2" name="dns_2" type="text" placeholder="0.0.0.0" {dns_2} disabled />
-
+     </span>
           <label for="ssid">SSID</label>
           <input type="text" id="ssid" name="ssid" {ssid} disabled />
-
           <label for="encryption">Use Encryption</label>
           <select id="encryption" name="encryption" disabled="disabled">
             <option value="0" >None</option>
@@ -43,4 +42,6 @@
           </fieldset>
           </form>
     </section>
-
+<script>
+  enable_dhcp_client();
+</script>

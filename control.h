@@ -22,29 +22,34 @@ bool initApp() {
 
   String hostname = split(row, ',', 1);
 
-  IPAddress ip = getIp(split(row, ',', 3));
-  IPAddress gateway = getIp(split(row, ',', 5));
-  IPAddress subnet = getIp(split(row, ',', 4));
-
   String ssid = split(row, ',', 8);
   String password = split(row, ',', 10);
 
-  // detail verbosity
-  Serial.begin(9600);
-  Serial.println(row + "\n");
-  Serial.println("\n" + hostname + "\n");
-  Serial.println("\n" + ip.toString() + "\n");
-  Serial.println("\n" + gateway.toString() + "\n");
-  Serial.println("\n" + subnet.toString() + "\n");
-  Serial.println("\n" + ssid + "\n");
-  Serial.println("\n" + password + "\n"); 
   
   WiFi.hostname(hostname);
-  WiFi.config(ip, gateway, subnet);
+
+  String dhcp = split(row, ',', 2);
+  if(!dhcp.equals("on")) {
+    IPAddress ip = getIp(split(row, ',', 3));
+    IPAddress gateway = getIp(split(row, ',', 5));
+    IPAddress subnet = getIp(split(row, ',', 4));
+
+    // detail verbosity
+    Serial.begin(9600);
+    Serial.println(row + "\n");
+    Serial.println("\n" + hostname + "\n");
+    Serial.println("\n" + ip.toString() + "\n");
+    Serial.println("\n" + gateway.toString() + "\n");
+    Serial.println("\n" + subnet.toString() + "\n");
+    Serial.println("\n" + ssid + "\n");
+    Serial.println("\n" + password + "\n"); 
+
+    WiFi.config(ip, gateway, subnet);
+  }
+
   WiFi.begin(ssid.c_str(), password.c_str());
 
   int times = 0;
-  Serial.begin(9600);
   while((WiFi.status() != WL_CONNECTED) && (buttonState == HIGH)) {
     delay(500);
     Serial.println("<<"+ String(times) + ">>");

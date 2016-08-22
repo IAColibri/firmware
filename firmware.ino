@@ -1,10 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-<<<<<<< HEAD
-#include <SoftwareSerial.h>
-=======
 #include <ESP8266WebServer.h>
->>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
 
 #include "FS.h"
 #include "config.h"
@@ -21,37 +17,6 @@ int buttonState = 0;
 int low = 0;
 bool configuration = true;
 
-<<<<<<< HEAD
-// const int sensor = 3;
-// int sensorState;
-/**
- WiFiServer TCPServer(81);
-*/
-
-SoftwareSerial ESPserial(2, 3); // RX | TX
-
-void setup() {
-
-  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
-  /* ***
-  * Initialize GPIO00 resetButton  
-  *** */
-  pinMode(buttonPin, INPUT);
-
-  /* ***
-   * Initialize GPIO03 open/close sensor
-   **** */
-
-  //  pinMode(sensor, INPUT);
-  ESPserial.begin(9600);
-
-  /* ***
-  * Initialize GPIO02 relayPin
-  *** */
-  pinMode(relayPin, OUTPUT);
-  pinMode(relayPin, LOW);
-
-=======
 const int sensor = 2;
 int sensorState;
 
@@ -62,7 +27,6 @@ WiFiClient client;
 
 void setup() {
   Serial.begin(9600);
->>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
   // Checking init mode 
   // can be AP_MODE
   // or CLIENT
@@ -122,20 +86,7 @@ void loop(void) {
   server.handleClient();
 
   // read sensor
-<<<<<<< HEAD
- // sensorState = digitalRead(sensor);
- //  Serial.print("sensor: ");
- //  Serial.println(sensorState);
-
-  // listen for communication from the ESP8266 and then write it to the serial monitor
-  if ( ESPserial.available() )   {  Serial.write( ESPserial.read() );  }
-  // listen for user input and send it to the ESP8266
-  if ( Serial.available() )       {  ESPserial.write( Serial.read() );  }
-
-=======
   sensorState = digitalRead(sensor);
-  
->>>>>>> 966bf2d47ab19cfd2e75c53f67d4b6d16cb471fa
   /***
   // read reset button */
   buttonState = digitalRead(buttonPin);

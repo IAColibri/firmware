@@ -24,8 +24,11 @@ int sensorState;
 bool login = false;
 
 WiFiClient espClient;
-const char* mqtt_server = "192.168.1.103";
+const char* mqtt_server = "192.168.0.100";
 PubSubClient client(espClient);
+
+#define topic1 "t1"
+#define topic2 "t2"
 
 void setup() {
   Serial.begin(9600);
@@ -87,27 +90,14 @@ void setup() {
   }
 }
 
+//Variables used in loop()
+long lastMsg = 0;
+float t1 = 75.5;
+float t2 = 50.5;
+
 void loop(void) {
   server.handleClient();
 
-<<<<<<< HEAD
-  // read sensor
-  sensorState = digitalRead(sensor);
-  /***
-  // read reset button */
-  buttonState = digitalRead(buttonPin);
-  if(buttonState == HIGH) {
-  } else {
-    if(low > 5000) { 
-      Serial.println("CLEAN!!");
-      clean(); 
-    }
-    low++;
-=======
-
-  if(ok) {
-   // read sensor
-   sensorState = digitalRead(sensor);
    /***
    // read reset button */
    buttonState = digitalRead(buttonPin);
@@ -120,12 +110,29 @@ void loop(void) {
      low++;
    }
 
+
+  if(ok) {
+   // read sensor
+   sensorState = digitalRead(sensor);
+
    if (!client.connected()) {
      reconnect();
    }
+   //Publish Values to MQTT broker
+   pubMQTT(topic1,t1);
+   pubMQTT(topic2,t2);
+
    client.loop();
->>>>>>> 96862a72da026af801e4ee717d7a28e918a65506
   }
+}
+
+
+//NOTE: if a user/password is used for MQTT connection use:
+//if(client.connect("TestMQTT", mqtt_user, mqtt_password)) {
+void pubMQTT(String topic,float topic_val){
+    Serial.print("Newest topic " + topic + " value:");
+    Serial.println(String(topic_val).c_str());
+    client.publish(topic.c_str(), String(topic_val).c_str(), true);
 }
 
 /** 
@@ -705,23 +712,18 @@ String networks(String ssid) {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(relayPin, HIGH);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is acive low on the ESP-01)
+  if((char)payload[0] == '1') {
+    pinMode(relayPin, HIGH);   // Turn the LED on (Note that LOW is the voltage level
+    delay(500);
   } else {
-    digitalWrite(relayPin, LOW);  // Turn the LED off by making the voltage HIGH
+    pinMode(relayPin, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    delay(500);
   }
-
-  digitalWrite(relayPin, HIGH);   // Turn the LED on (Note that LOW is the voltage level
-  client.publish("/wiicontrol/topic/0", "Light On ->" + (char)payload[0]);
-  client.publish("/wiicontrol/topic/1", topic);
 }
 
 void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!client.connected()) {  client.setCallback(callback);
     // Attempt to connect
     if (client.connect("WiiControl332")) {
       // Once connected, publish an announcement...
